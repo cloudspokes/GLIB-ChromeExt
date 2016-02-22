@@ -4,12 +4,17 @@
 
 /**
  * Represents the main content script executed in github domain
+ *
+ * Changes in 1.1 (GLIB-AUTHORIZATION AND ENDPOINT CHANGE)
+ * - Added authentication for topcoder
+ *
  * @author TCSASSEMBLER
- * @version 1.0
+ * @version 1.1
  */
 
 var CHECK_INTERVAL = 50;
-var TOKEN_KEY = 'glib::github_token';
+var TOKEN_KEY_GITHUB = 'glib::github_token';
+var TOKEN_KEY_TOPCODER = 'glib::topcoder_token';
 var GITHUB_URL = 'https://api.github.com/';
 
 OAuth.initialize(OAUTH_API_KEY);
@@ -67,10 +72,10 @@ function injectButton() {
  * Show github oauth popup
  * @param callback the callback function
  */
-function authenticate(callback) {
+function authenticateGithub(callback) {
     OAuth.popup('github')
         .done(function (result) {
-            localStorage[TOKEN_KEY] = result.access_token;
+            localStorage[TOKEN_KEY_GITHUB] = result.access_token;
             callback();
         })
         .fail(function (err) {
@@ -90,16 +95,16 @@ function noCacheSuffix() {
  * Ensure user is authenticated
  * @param callback the callback function
  */
-function checkAuthentication(callback) {
-    if (!localStorage[TOKEN_KEY]) {
-        authenticate(callback);
+function checkGithubAuthentication(callback) {
+    if (!localStorage[TOKEN_KEY_GITHUB]) {
+        authenticateGithub(callback);
         return;
     }
     //check if token is valid
     axios({
         baseURL: GITHUB_URL,
         headers: {
-            'authorization': 'bearer ' + localStorage[TOKEN_KEY]
+            'authorization': 'bearer ' + localStorage[TOKEN_KEY_GITHUB]
         },
         method: 'get',
         url: '/user' + noCacheSuffix()
@@ -109,14 +114,49 @@ function checkAuthentication(callback) {
         console.log(response);
         if (response.status === 401) {
             //token expired or revoked
-            delete localStorage[TOKEN_KEY];
-            checkAuthentication(callback);
+            delete localStorage[TOKEN_KEY_GITHUB];
+            checkGithubAuthentication(callback);
         } else {
             console.error(response);
             callback(new Error('Github GET /user: ' + response.status + ' status code'));
         }
     });
 }
+
+
+/**
+ * Authenticate with topcoder
+ * @param callback the callback function
+ */
+function authenticateTopCoder(callback) {
+    axios.post(TC_ENDPOINT + 'oauth/access_token',  {
+        'x_auth_username': TC_AUTH_USERNAME,
+        'x_auth_password': TC_AUTH_PASSWORD
+    }).then(function (result) {
+        if(result.data.errorMessage)
+            callback({message: result.data.errorMessage});
+        else {
+            localStorage[TOKEN_KEY_TOPCODER] = result.data.x_auth_access_token;
+            callback();
+        }
+
+    }, function (err) {
+        callback(err);
+    });
+}
+
+/**
+ * Ensure user is authenticated to topcoder
+ * @param callback the callback function
+ */
+function checkTopCoderAuthentication(callback) {
+    if (!localStorage[TOKEN_KEY_TOPCODER]) {
+        authenticateTopCoder(callback);
+        return;
+    }
+    callback();
+}
+
 
 /**
  * Get current issue details
@@ -127,7 +167,7 @@ function getIssue(callback) {
     axios({
         baseURL: GITHUB_URL,
         headers: {
-            'authorization': 'bearer ' + localStorage[TOKEN_KEY]
+            'authorization': 'bearer ' + localStorage[TOKEN_KEY_GITHUB]
         },
         method: 'get',
         url: url + noCacheSuffix()
@@ -145,7 +185,11 @@ function getIssue(callback) {
  * @param callback the callback function
  */
 function postIssue(issue, callback) {
-    axios.post(TC_ENDPOINT, issue).then(function (response) {
+    axios.post(TC_ENDPOINT, issue, {
+        headers: {
+            'x-auth-access-token': localStorage[TOKEN_KEY_TOPCODER]
+        }
+    }).then(function (response) {
         var data = response.data;
         var msg;
         if (data.success) {
@@ -165,6 +209,14 @@ function postIssue(issue, callback) {
         callback(null, msg.join('\n'));
     }, function (response) {
         console.error(response);
+        if (response.status === 401) {
+            //token expired or revoked
+            delete localStorage[TOKEN_KEY_TOPCODER];
+            checkTopCoderAuthentication(function () {
+                postIssue(issue, callback);
+            });
+            return;
+        }
         var msg = [
             'Failed to create challenge',
             'Status code: ' + response.status,
@@ -187,7 +239,7 @@ function addComment(text, callback) {
     axios({
         baseURL: GITHUB_URL,
         headers: {
-            'authorization': 'bearer ' + localStorage[TOKEN_KEY]
+            'authorization': 'bearer ' + localStorage[TOKEN_KEY_GITHUB]
         },
         data: {
             body: text
@@ -207,7 +259,8 @@ function addComment(text, callback) {
  */
 function launchOnTC(callback) {
     async.waterfall([
-        checkAuthentication,
+        checkGithubAuthentication,
+        checkTopCoderAuthentication,
         getIssue,
         postIssue,
         addComment
