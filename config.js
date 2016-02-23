@@ -11,4 +11,6 @@
 
 var OAUTH_API_KEY = 'F3Nc7_WaGdPtIlVowgHxJcnkpUw';
 
-var TC_ENDPOINT = 'https://glib-mock.herokuapp.com/';
+var TC_ENDPOINT = 'https://glib-mock.herokuapp.com/',
+    TC_AUTH_USERNAME = 'mess',
+    TC_AUTH_PASSWORD = 'appirio123';
