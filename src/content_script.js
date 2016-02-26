@@ -29,12 +29,22 @@ var owner, repo, issueId;
  * This is infinite interval, because page content can be updated dynamically
  * (when new comment is added or because of html5 navigation).
  */
+function injectStyles() {
+    var node = document.createElement('link');
+    node.rel = 'stylesheet';
+    node.href = chrome.extension.getURL('styles/style.css');
+    document.body.appendChild(node);
+}
+
 function injectButton() {
-    setInterval(function () {
+    setInterval(function() {
         if (document.getElementById('LAUNCH_ON_TC')) {
             //button already exists
             return;
         }
+
+        injectStyles();
+
         var exec = /([\d\w\.\-]+)\/([\d\w\.\-]+)\/issues\/(\d+)/.exec(location.pathname);
         if (!exec) {
             //not issue details
@@ -52,15 +62,15 @@ function injectButton() {
             return;
         }
         var btn = document.createElement('button');
-        btn.className = 'btn btn-sm btn-default';
-        btn.innerText = 'Launch on TC';
+        btn.className = 'btn btn-sm btn-default btn-topcoder';
+        btn.innerHTML = 'Topcoder';
         btn.setAttribute('id', 'LAUNCH_ON_TC');
-        btn.addEventListener('click', function () {
+        btn.addEventListener('click', function() {
             btn.setAttribute('disabled', 'disabled');
             btn.innerText = 'Processing...';
-            launchOnTC(function () {
+            launchOnTC(function() {
                 btn.removeAttribute('disabled');
-                btn.innerText = 'Launch on TC';
+                btn.innerText = 'Topcoder';
             });
         });
         wrapper.insertBefore(btn, wrapper.firstChild);
@@ -74,11 +84,11 @@ function injectButton() {
  */
 function authenticateGithub(callback) {
     OAuth.popup('github')
-        .done(function (result) {
+        .done(function(result) {
             localStorage[TOKEN_KEY_GITHUB] = result.access_token;
             callback();
         })
-        .fail(function (err) {
+        .fail(function(err) {
             callback(err);
         });
 }
@@ -108,9 +118,9 @@ function checkGithubAuthentication(callback) {
         },
         method: 'get',
         url: '/user' + noCacheSuffix()
-    }).then(function () {
+    }).then(function() {
         callback();
-    }, function (response) {
+    }, function(response) {
         console.log(response);
         if (response.status === 401) {
             //token expired or revoked
@@ -129,18 +139,20 @@ function checkGithubAuthentication(callback) {
  * @param callback the callback function
  */
 function authenticateTopCoder(callback) {
-    axios.post(TC_ENDPOINT + 'oauth/access_token',  {
+    axios.post(TC_ENDPOINT + 'oauth/access_token', {
         'x_auth_username': TC_AUTH_USERNAME,
         'x_auth_password': TC_AUTH_PASSWORD
-    }).then(function (result) {
-        if(result.data.errorMessage)
-            callback({message: result.data.errorMessage});
+    }).then(function(result) {
+        if (result.data.errorMessage)
+            callback({
+                message: result.data.errorMessage
+            });
         else {
             localStorage[TOKEN_KEY_TOPCODER] = result.data.x_auth_access_token;
             callback();
         }
 
-    }, function (err) {
+    }, function(err) {
         callback(err);
     });
 }
@@ -171,9 +183,9 @@ function getIssue(callback) {
         },
         method: 'get',
         url: url + noCacheSuffix()
-    }).then(function (response) {
+    }).then(function(response) {
         callback(null, response.data);
-    }, function (response) {
+    }, function(response) {
         console.error(response);
         callback(new Error('Github GET ' + url + ': ' + response.status + ' status code'));
     });
@@ -189,7 +201,7 @@ function postIssue(issue, callback) {
         headers: {
             'x-auth-access-token': localStorage[TOKEN_KEY_TOPCODER]
         }
-    }).then(function (response) {
+    }).then(function(response) {
         var data = response.data;
         var msg;
         if (data.success) {
@@ -207,12 +219,12 @@ function postIssue(issue, callback) {
             ];
         }
         callback(null, msg.join('\n'));
-    }, function (response) {
+    }, function(response) {
         console.error(response);
         if (response.status === 401) {
             //token expired or revoked
             delete localStorage[TOKEN_KEY_TOPCODER];
-            checkTopCoderAuthentication(function () {
+            checkTopCoderAuthentication(function() {
                 postIssue(issue, callback);
             });
             return;
@@ -246,9 +258,9 @@ function addComment(text, callback) {
         },
         method: 'post',
         url: url
-    }).then(function () {
+    }).then(function() {
         callback();
-    }, function (response) {
+    }, function(response) {
         console.error(response);
         callback(new Error('Github GET ' + url + ': ' + response.status + ' status code'));
     });
@@ -264,7 +276,7 @@ function launchOnTC(callback) {
         getIssue,
         postIssue,
         addComment
-    ], function (err) {
+    ], function(err) {
         if (err) {
             console.error(err);
             if (err.message !== 'The popup was closed') {

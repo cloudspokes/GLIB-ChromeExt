@@ -1,24 +1,26 @@
 {
-  "name": "GLIB-ChromeExt",
-  "version": "1.0",
-  "description": "GLIB-ChromeExt",
-  "permissions": [
-    "https://glib-mock.herokuapp.com/*"
-  ],
-  "content_scripts": [
-    {
-      "matches": [
-        "https://github.com/*"
-      ],
-      "js": [
-        "config.js",
-        "lib/axios.js",
-        "lib/async.js",
-        "lib/oauth.js",
-        "src/content_script.js"
-      ],
-      "run_at": "document_start"
-    }
-  ],
-  "manifest_version": 2
+    "name": "GLIB-ChromeExt",
+    "version": "1.0",
+    "description": "GLIB-ChromeExt",
+    "permissions": [
+        "https://glib-mock.herokuapp.com/*"
+    ],
+    "content_scripts": [{
+        "matches": [
+            "https://github.com/*"
+        ],
+        "js": [
+            "config.js",
+            "lib/axios.js",
+            "lib/async.js",
+            "lib/oauth.js",
+            "src/content_script.js"
+        ],
+        "run_at": "document_start"
+    }],
+    "web_accessible_resources": [
+        "images/*.png",
+        "styles/style.css"
+    ],
+    "manifest_version": 2
 }
