@@ -197,7 +197,7 @@ function getIssue(callback) {
  * @param callback the callback function
  */
 function postIssue(issue, callback) {
-    axios.post(TC_ENDPOINT, issue, {
+    axios.post(TC_ENDPOINT + 'challenges', issue, {
         headers: {
             'x-auth-access-token': localStorage[TOKEN_KEY_TOPCODER]
         }
