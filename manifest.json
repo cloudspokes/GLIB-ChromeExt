@@ -2,6 +2,11 @@
     "name": "GLIB-ChromeExt",
     "version": "1.0",
     "description": "GLIB-ChromeExt",
+    "applications": {
+        "gecko": {
+            "id": "GLIB@topcoder.com"
+        }
+    },
     "permissions": [
         "https://glib-mock.herokuapp.com/*"
     ],
