@@ -26,9 +26,5 @@
       "run_at": "document_start"
     }
   ],
-  "manifest_version": 2,
-  "web_accessible_resources": [
-    // "lib/vex/vex.css",
-    // "lib/vex/vex-theme-os.css"
-  ]
+  "manifest_version": 2
 }
