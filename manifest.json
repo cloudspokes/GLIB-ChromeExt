@@ -10,11 +10,17 @@
       "matches": [
         "https://github.com/*"
       ],
+      "css": [
+        "lib/vex/vex.css",
+        "lib/vex/vex-theme-os.css"
+      ],
       "js": [
         "config.js",
         "lib/axios.js",
         "lib/async.js",
         "lib/oauth.js",
+        "lib/jquery.js",
+        "lib/vex/vex.combined.min.js",
         "src/content_script.js"
       ],
       "run_at": "document_start"
