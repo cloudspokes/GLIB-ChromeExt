@@ -3,8 +3,8 @@
 
 ## Configuration
 
-`config.js` contains configuration  
-`OAUTH_API_KEY` the API Key from https://oauth.io/  
+`config.js` contains configuration
+`OAUTH_API_KEY` the API Key from https://oauth.io/
 `TC_ENDPOINT` the topcoder endpoint where issue details are posted, add same url to `permissions` in `manifest.json` (it must end with `*`)
 
 ### Setup github app
@@ -37,6 +37,23 @@
 
 
 ### Verification
-Video https://youtu.be/rYRLGfEOGzg  
-It's recommended to create a new repository https://github.com/new  
+Video https://youtu.be/rYRLGfEOGzg
+It's recommended to create a new repository https://github.com/new
 then go to `Issues` tab and create a new issue
+
+## Prompt
+
+Prompts the user for their TopCoder credentials, requests and saves token in
+localStorage.  If token is already stored locally, doesn't prompt for login.
+
+### Modifications
+- Added promptTopCoder(): Populates username and password from prompt
+- Changed credentials checked within authenticateTopCoder() to new variables
+- Modified checkTopCoderAuthentication() to call promptTopCoder() if user is not authenticated
+
+### Third Party Libraries
+
+* [Vex](http://github.hubspot.com/vex/): Used for the TopCoder Prompt
+    - MIT License
+* [jQuery](https://jquery.org/): Dependency for Vex
+    - MIT License

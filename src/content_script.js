@@ -23,7 +23,6 @@ OAuth.initialize(OAUTH_API_KEY);
 //parsed from URL
 var owner, repo, issueId;
 
-
 /**
  * Try to inject a button.
  * This is infinite interval, because page content can be updated dynamically
@@ -76,7 +75,6 @@ function injectButton() {
         wrapper.insertBefore(btn, wrapper.firstChild);
     }, CHECK_INTERVAL);
 }
-
 
 /**
  * Show github oauth popup
@@ -133,21 +131,47 @@ function checkGithubAuthentication(callback) {
     });
 }
 
-
+/**
+ * Prompt user for topcoder credentials
+ * @param callback the callback function
+ */
+function promptTopCoder(callback) {
+    vex.dialog.open({
+        message: 'Enter your topcoder username and password:',
+        className: 'vex-theme-os',
+        input: '<input name=\"username\" type=\"text\" placeholder=\"Username\" required />\n<input name=\"password\" type=\"password\" placeholder=\"Password\" required />',
+        buttons: [
+            $.extend({}, vex.dialog.buttons.YES, {
+                text: 'Login'
+            }),
+            $.extend({}, vex.dialog.buttons.NO, {
+                text: 'Cancel'
+            })
+        ],
+        callback: function(data) {
+            if (data === false) {
+                callback(new Error('topcoder login window closed'));
+                return;
+            }
+            callback(null, data.username, data.password);
+            return;
+        }
+    });
+}
 /**
  * Authenticate with topcoder
  * @param callback the callback function
  */
-function authenticateTopCoder(callback) {
+function authenticateTopCoder(username, password, callback) {
     axios.post(TC_ENDPOINT + 'oauth/access_token', {
-        'x_auth_username': TC_AUTH_USERNAME,
-        'x_auth_password': TC_AUTH_PASSWORD
+        'x_auth_username': username,
+        'x_auth_password': password
     }).then(function(result) {
-        if (result.data.errorMessage)
+        if (result.data.errorMessage) {
             callback({
                 message: result.data.errorMessage
             });
-        else {
+        } else {
             localStorage[TOKEN_KEY_TOPCODER] = result.data.x_auth_access_token;
             callback();
         }
@@ -163,12 +187,22 @@ function authenticateTopCoder(callback) {
  */
 function checkTopCoderAuthentication(callback) {
     if (!localStorage[TOKEN_KEY_TOPCODER]) {
-        authenticateTopCoder(callback);
+        async.waterfall([
+            promptTopCoder,
+            authenticateTopCoder
+        ], function(err) {
+            if (err) {
+                callback(err);
+                return;
+            }
+            callback();
+            return;
+        });
+    } else {
+        callback();
         return;
     }
-    callback();
 }
-
 
 /**
  * Get current issue details
@@ -278,6 +312,10 @@ function launchOnTC(callback) {
         addComment
     ], function(err) {
         if (err) {
+            if (err.message === 'topcoder login window closed') {
+                callback();
+                return;
+            }
             console.error(err);
             if (err.message !== 'The popup was closed') {
                 alert('An error occurred: ' + err.message);
@@ -289,7 +327,6 @@ function launchOnTC(callback) {
         callback();
     });
 }
-
 
 //initial load
 injectButton();
