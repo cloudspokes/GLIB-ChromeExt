@@ -24,7 +24,7 @@ OAuth.initialize(OAUTH_API_KEY);
 var owner, repo, issueId;
 
 /**
- * Try to inject a button.
+ * Try to inject topcoder buttons on issues list and issue detail page.
  * This is infinite interval, because page content can be updated dynamically
  * (when new comment is added or because of html5 navigation).
  */
@@ -37,18 +37,18 @@ function injectStyles() {
 
 function injectButton() {
     setInterval(function() {
-        if (document.getElementById('LAUNCH_ON_TC')) {
+        if (document.getElementById('LAUNCH_ON_TC') || document.getElementById('LAUNCH_MULTIPLE_ON_TC')) {
             //button already exists
             return;
         }
-
-        injectStyles();
-
         var exec = /([\d\w\.\-]+)\/([\d\w\.\-]+)\/issues\/(\d+)/.exec(location.pathname);
         if (!exec) {
             //not issue details
             return;
         }
+
+        injectStyles();
+
         owner = exec[1];
         repo = exec[2];
         issueId = exec[3];
@@ -73,6 +73,61 @@ function injectButton() {
             });
         });
         wrapper.insertBefore(btn, wrapper.firstChild);
+    }, CHECK_INTERVAL);
+}
+
+function injectMultipleLaunchButton() {
+    setInterval(function() {
+        if (document.getElementById('LAUNCH_MULTIPLE_ON_TC') || document.getElementById('LAUNCH_ON_TC')) {
+            //button already exists
+            return;
+        }
+
+        /* issue page url is of the form
+         * https://github.com/cloudspokes/GLIB-ChromeExt/issues
+         * or https://github.com/cloudspokes/GLIB-ChromeExt/issues/created_by/tc_assembler
+         * Following regex matches that after 'issues/', there shouldn't be a number in URL
+         * as that will be a issue detail page. Anything other than a number after 'issues/'
+         * is still a issues list page, which is supported by following regex
+         */
+        var exec = /([\d\w\.\-]+)\/([\d\w\.\-]+)\/issues(?!\/\d+)/.exec(location.pathname);
+        if (!exec) {
+            //not issues list page
+            return;
+        }
+
+        injectStyles();
+
+        owner = exec[1];
+        repo = exec[2];
+        var issuesListing = document.getElementsByClassName('issues-listing')[0];
+        if (!issuesListing) {
+            return;
+        }
+        var wrapper = issuesListing.getElementsByClassName('subnav')[0];
+        if (!wrapper) {
+            return;
+        }
+        var div = document.createElement('div');
+        div.className = 'right';
+        var btn = document.createElement('button');
+        btn.className = 'btn btn-default btn-topcoder';
+        btn.innerHTML = 'Topcoder';
+        btn.setAttribute('id', 'LAUNCH_MULTIPLE_ON_TC');
+        btn.addEventListener('click', function() {
+            btn.setAttribute('disabled', 'disabled');
+            btn.innerText = 'Processing...';
+            issueIds = [];
+            launchMultipleOnTC(function() {
+                btn.removeAttribute('disabled');
+                btn.innerText = 'Topcoder';
+            });
+        });
+        div.appendChild(btn);
+        var newIssueBtn = wrapper.childNodes[1];
+        div.appendChild(newIssueBtn);
+        wrapper.removeChild(wrapper.childNodes[1]);
+        wrapper.insertBefore(div, wrapper.firstChild);
     }, CHECK_INTERVAL);
 }
 
@@ -205,10 +260,11 @@ function checkTopCoderAuthentication(callback) {
 }
 
 /**
- * Get current issue details
+ * Get given issue details
+ * @param issueId - id of the issue
  * @param callback the callback function
  */
-function getIssue(callback) {
+function getIssue(issueId, callback) {
     var url = '/repos/' + owner + '/' + repo + '/issues/' + issueId;
     axios({
         baseURL: GITHUB_URL,
@@ -223,6 +279,14 @@ function getIssue(callback) {
         console.error(response);
         callback(new Error('Github GET ' + url + ': ' + response.status + ' status code'));
     });
+}
+
+/**
+ * Get current issue
+ * @param callback - the callback function
+ */
+function getCurrentIssue(callback) {
+   getIssue(issueId, callback);
 }
 
 /**
@@ -276,11 +340,12 @@ function postIssue(issue, callback) {
 }
 
 /**
- * Add comment to current issue
+ * Add comment to given issue
+ * @param {number} id of the issue
  * @param {String} text the comment text
  * @param callback the callback function
  */
-function addComment(text, callback) {
+function addComment(issueId, text, callback) {
     var url = '/repos/' + owner + '/' + repo + '/issues/' + issueId + '/comments';
     axios({
         baseURL: GITHUB_URL,
@@ -301,15 +366,24 @@ function addComment(text, callback) {
 }
 
 /**
+ * Add comment to current issue
+ * @param {String} text the comment text
+ * @param callback the callback function
+ */
+function addCommentToCurrentIssue(text, callback) {
+    addComment(issueId, text, callback);
+}
+
+/**
  * Handle button click
  */
 function launchOnTC(callback) {
     async.waterfall([
         checkGithubAuthentication,
         checkTopCoderAuthentication,
-        getIssue,
+        getCurrentIssue,
         postIssue,
-        addComment
+        addCommentToCurrentIssue
     ], function(err) {
         if (err) {
             if (err.message === 'topcoder login window closed') {
@@ -328,5 +402,68 @@ function launchOnTC(callback) {
     });
 }
 
+/**
+ * Get an araay of ids of selected issues
+ * @param callback - the callback function
+ */
+function getSelectedIssues(callback) {
+    var issueIds = $('input[type="checkbox"][name="issues\\[\\]"]:checked')
+      .map(function(){return $(this).val();}).get();
+    if (issueIds.length == 0) {
+        callback(new Error('No issues selected'));
+    } else {
+        callback(null, issueIds);
+    }
+}
+
+/**
+ * Create TC challenge for all the issues passed
+ * @param issueIds - array of issue ids for which TC challenges are to be created
+ * @param callback - the callback function
+ */
+function postIssues(issueIds, callback) {
+    async.each(issueIds, function(issueId, postIssueCallback) {
+        async.waterfall([
+          function(cb) {
+              cb(null, issueId);
+          },
+          getIssue,
+          postIssue,
+          function(text, cb) {
+              addComment(issueId, text, cb);
+          }
+        ], function(err) {
+            postIssueCallback();
+        })
+    }, function(err) {
+        callback(err);
+    });
+}
+
+
+/**
+ * Handle multiple launch button click
+ */
+function launchMultipleOnTC(callback) {
+    async.waterfall([
+        checkGithubAuthentication,
+        checkTopCoderAuthentication,
+        getSelectedIssues,
+        postIssues
+    ], function(err) {
+        if (err) {
+            if (err.message === 'topcoder login window closed') {
+                callback();
+                return;
+            }
+            if (err.message !== 'The popup was closed') {
+                alert('An error occurred: ' + err.message);
+            }
+        }
+        callback();
+    });
+}
+
 //initial load
 injectButton();
+injectMultipleLaunchButton();

@@ -8,3 +8,7 @@
 .btn-topcoder:hover{
     background: url(../images/logoBtn.png) 3px center no-repeat, linear-gradient(#eee, #ddd);
 }
+
+.subnav div .right {
+    margin-left: 10px;
+}
