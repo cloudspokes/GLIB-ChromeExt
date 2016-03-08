@@ -9,6 +9,6 @@
  */
 
 
-var OAUTH_API_KEY = 'F3Nc7_WaGdPtIlVowgHxJcnkpUw';
+var OAUTH_API_KEY = 'AKSzHXuH_RJ-Qu7gUO2QO1obv04';
 
 var TC_ENDPOINT = 'https://glib-mock.herokuapp.com/';
