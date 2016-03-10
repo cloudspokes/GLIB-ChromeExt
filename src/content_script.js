@@ -15,6 +15,7 @@
 var CHECK_INTERVAL = 50;
 var TOKEN_KEY_GITHUB = 'glib::github_token';
 var TOKEN_KEY_TOPCODER = 'glib::topcoder_token';
+var ENVIRONMENT = 'glib::environment';
 var GITHUB_URL = 'https://api.github.com/';
 
 OAuth.initialize(OAUTH_API_KEY);
@@ -22,6 +23,7 @@ OAuth.initialize(OAUTH_API_KEY);
 //current view information
 //parsed from URL
 var owner, repo, issueId;
+var isDevEnvironment = false;
 
 function setChromeStorage(key, val) {
     var obj = {};
@@ -31,6 +33,16 @@ function setChromeStorage(key, val) {
 
 function removeChromeStorage(key) {
     chrome.storage.local.remove(key);
+}
+
+function setEnv() {
+    chrome.storage.local.get(ENVIRONMENT, function(result) {
+        isDevEnvironment = result[ENVIRONMENT] || false;
+    });
+}
+
+function getTCEndpoint() {
+    return (isDevEnvironment ? TC_ENDPOINT_DEV : TC_ENDPOINT_PROD);
 }
 
 /**
@@ -176,7 +188,7 @@ function promptTopCoder(callback) {
  * @param callback the callback function
  */
 function authenticateTopCoder(username, password, callback) {
-    axios.post(TC_ENDPOINT + 'oauth/access_token', {
+    axios.post(getTCEndpoint() + 'oauth/access_token', {
         'x_auth_username': username,
         'x_auth_password': password
     }).then(function(result) {
@@ -249,7 +261,7 @@ function getIssue(callback) {
  */
 function postIssue(issue, callback) {
     chrome.storage.local.get(TOKEN_KEY_TOPCODER, function(result) {
-        axios.post(TC_ENDPOINT + 'challenges', issue, {
+        axios.post(getTCEndpoint() + 'challenges', issue, {
             headers: {
                 'x-auth-access-token': result[TOKEN_KEY_TOPCODER]
             }
@@ -352,5 +364,6 @@ function launchOnTC(callback) {
     });
 }
 
+setEnv();
 //initial load
 injectButton();

@@ -5,6 +5,7 @@
     "options_page": "options.html",
     "permissions": [
         "https://glib-mock.herokuapp.com/*",
+        "https://glib-prod.herokuapp.com/*",
         "storage"
     ],
     "content_scripts": [{
