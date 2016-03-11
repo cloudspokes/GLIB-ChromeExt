@@ -440,7 +440,6 @@ function launchOnTC(callback) {
     });
 }
 
-<< << << < HEAD
 /**
  * Get an araay of ids of selected issues
  * @param callback - the callback function
