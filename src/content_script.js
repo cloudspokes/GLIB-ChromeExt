@@ -294,7 +294,7 @@ function checkTopCoderAuthentication(callback) {
  * @param issueId - id of the issue
  * @param callback the callback function
  */
-function getIssue(callback) {
+function getIssue(issueId, callback) {
     chrome.storage.local.get(TOKEN_KEY_GITHUB, function(result) {
         var url = '/repos/' + owner + '/' + repo + '/issues/' + issueId;
         axios({
@@ -381,7 +381,7 @@ function postIssue(issue, callback) {
  * @param callback the callback function
  */
 
-function addComment(text, callback) {
+function addComment(issueId, text, callback) {
     chrome.storage.local.get(TOKEN_KEY_GITHUB, function(result) {
         var url = '/repos/' + owner + '/' + repo + '/issues/' + issueId + '/comments';
         axios({
@@ -420,7 +420,9 @@ function launchOnTC(callback) {
         checkGithubAuthentication,
         checkTopCoderAuthentication,
         getCurrentIssue,
-        postIssue,
+        function(issue, cb) {
+            postIssue(issue, cb);
+        },
         addCommentToCurrentIssue
     ], function(err) {
         if (err) {
@@ -462,15 +464,19 @@ function getSelectedIssues(callback) {
  * @param callback - the callback function
  */
 function postIssues(issueIds, callback) {
-    async.each(issueIds, function(issueId, postIssueCallback) {
+    async.each(issueIds, function(iiD, postIssueCallback) {
         async.waterfall([
             function(cb) {
-                cb(null, issueId);
+                cb(null, iiD);
             },
-            getIssue,
-            postIssue,
+            function(iiD, cb) {
+                getIssue(iiD, cb);
+            },
+            function(issue, cb) {
+                postIssue(issue, cb);
+            },
             function(text, cb) {
-                addComment(issueId, text, cb);
+                addComment(iiD, text, cb);
             }
         ], function(err) {
             postIssueCallback();
