@@ -1,0 +1,49 @@
+<html>
+<head>
+	<title>Options for GLIB-ChromeExt</title>
+	<script src="lib/jquery.js"></script>
+	<script src="lib/vex/vex.combined.min.js"></script>
+	<script type="text/javascript" src="options.js"></script>
+	<link rel="stylesheet" type="text/css" href="lib/vex/vex-theme-os.css">
+	<link rel="stylesheet" type="text/css" href="lib/vex/vex.css">
+	<link rel="stylesheet" type="text/css" href="styles/options.css">
+</head>
+<body>
+	<div class="title">
+		<img src="/images/logoBig.png" />
+		<h1>GLIB-ChromeExt</h1>
+	</div>
+	<div id="optionWrapper">
+		<div id="envWrapper">
+			<h3>Environment</h3>
+			Development: <input type="checkbox" id="environment" name="environment"/>
+		</div>
+
+		<div id="deleteWrapper">
+			<h3>Github Token</h3>
+			<input class="git-repo" id="githubToken" type="text" placeholder="Gihub Token" readonly>
+			<button class="delete" type="github">Delete</button>
+
+		</div>
+		<div id="deleteWrapper">
+			<div><h3>TopCoder Token</h3></div>
+			<div>
+				<input class="git-repo" id="topCoderToken" type="text" placeholder="TopCoder Token" readonly>
+				<button class="delete" type="topcoder">Delete</button>
+			</div>
+		</div>
+		<div id="addWrapper">
+			<div><h3>Github-TopCoder Mappings</h3></div>
+			<input id="pid" class="project-id" type="text" placeholder="Project ID">
+			<input id="repoUrl" class="git-repo" type="text" placeholder="Git Repo">
+			<button id="add" class="btn-primary">Add</button>
+			<button id="addMass" class="btn-primary">Add mass</button>
+			<button class="delete-all">Delete All</button>
+		</div>
+		<div id="mapWrapper">
+
+		</div>
+	</div>
+
+</body>
+</html>

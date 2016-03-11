@@ -2,8 +2,11 @@
     "name": "GLIB-ChromeExt",
     "version": "1.0",
     "description": "GLIB-ChromeExt",
+    "options_page": "options.html",
     "permissions": [
-        "https://glib-mock.herokuapp.com/*"
+        "https://glib-mock.herokuapp.com/*",
+        "https://glib-prod.herokuapp.com/*",
+        "storage"
     ],
     "content_scripts": [{
         "matches": [

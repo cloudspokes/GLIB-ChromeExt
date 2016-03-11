@@ -15,6 +15,7 @@
 var CHECK_INTERVAL = 50;
 var TOKEN_KEY_GITHUB = 'glib::github_token';
 var TOKEN_KEY_TOPCODER = 'glib::topcoder_token';
+var ENVIRONMENT = 'glib::environment';
 var GITHUB_URL = 'https://api.github.com/';
 
 OAuth.initialize(OAUTH_API_KEY);
@@ -22,6 +23,27 @@ OAuth.initialize(OAUTH_API_KEY);
 //current view information
 //parsed from URL
 var owner, repo, issueId;
+var isDevEnvironment = false;
+
+function setChromeStorage(key, val) {
+    var obj = {};
+    obj[key] = val;
+    chrome.storage.local.set(obj);
+}
+
+function removeChromeStorage(key) {
+    chrome.storage.local.remove(key);
+}
+
+function setEnv() {
+    chrome.storage.local.get(ENVIRONMENT, function(result) {
+        isDevEnvironment = result[ENVIRONMENT] || false;
+    });
+}
+
+function getTCEndpoint() {
+    return (isDevEnvironment ? TC_ENDPOINT_DEV : TC_ENDPOINT_PROD);
+}
 
 /**
  * Try to inject topcoder buttons on issues list and issue detail page.
@@ -41,7 +63,10 @@ function injectButton() {
             //button already exists
             return;
         }
+
+        injectStyles();
         var exec = /([\d\w\.\-]+)\/([\d\w\.\-]+)\/issues\/(\d+)/.exec(location.pathname);
+
         if (!exec) {
             //not issue details
             return;
@@ -138,7 +163,7 @@ function injectMultipleLaunchButton() {
 function authenticateGithub(callback) {
     OAuth.popup('github')
         .done(function(result) {
-            localStorage[TOKEN_KEY_GITHUB] = result.access_token;
+            setChromeStorage(TOKEN_KEY_GITHUB, result.access_token);
             callback();
         })
         .fail(function(err) {
@@ -159,29 +184,32 @@ function noCacheSuffix() {
  * @param callback the callback function
  */
 function checkGithubAuthentication(callback) {
-    if (!localStorage[TOKEN_KEY_GITHUB]) {
-        authenticateGithub(callback);
-        return;
-    }
-    //check if token is valid
-    axios({
-        baseURL: GITHUB_URL,
-        headers: {
-            'authorization': 'bearer ' + localStorage[TOKEN_KEY_GITHUB]
-        },
-        method: 'get',
-        url: '/user' + noCacheSuffix()
-    }).then(function() {
-        callback();
-    }, function(response) {
-        console.log(response);
-        if (response.status === 401) {
-            //token expired or revoked
-            delete localStorage[TOKEN_KEY_GITHUB];
-            checkGithubAuthentication(callback);
+    chrome.storage.local.get(TOKEN_KEY_GITHUB, function(result) {
+        if (!result[TOKEN_KEY_GITHUB]) {
+            authenticateGithub(callback);
+            return;
         } else {
-            console.error(response);
-            callback(new Error('Github GET /user: ' + response.status + ' status code'));
+            //check if token is valid
+            axios({
+                baseURL: GITHUB_URL,
+                headers: {
+                    'authorization': 'bearer ' + result[TOKEN_KEY_GITHUB]
+                },
+                method: 'get',
+                url: '/user' + noCacheSuffix()
+            }).then(function() {
+                callback();
+            }, function(response) {
+                console.log(response);
+                if (response.status === 401) {
+                    //token expired or revoked
+                    removeChromeStorage(TOKEN_KEY_GITHUB);
+                    checkGithubAuthentication(callback);
+                } else {
+                    console.error(response);
+                    callback(new Error('Github GET /user: ' + response.status + ' status code'));
+                }
+            });
         }
     });
 }
@@ -218,7 +246,7 @@ function promptTopCoder(callback) {
  * @param callback the callback function
  */
 function authenticateTopCoder(username, password, callback) {
-    axios.post(TC_ENDPOINT + 'oauth/access_token', {
+    axios.post(getTCEndpoint() + 'oauth/access_token', {
         'x_auth_username': username,
         'x_auth_password': password
     }).then(function(result) {
@@ -227,7 +255,7 @@ function authenticateTopCoder(username, password, callback) {
                 message: result.data.errorMessage
             });
         } else {
-            localStorage[TOKEN_KEY_TOPCODER] = result.data.x_auth_access_token;
+            setChromeStorage(TOKEN_KEY_TOPCODER, result.data.x_auth_access_token);
             callback();
         }
 
@@ -241,22 +269,24 @@ function authenticateTopCoder(username, password, callback) {
  * @param callback the callback function
  */
 function checkTopCoderAuthentication(callback) {
-    if (!localStorage[TOKEN_KEY_TOPCODER]) {
-        async.waterfall([
-            promptTopCoder,
-            authenticateTopCoder
-        ], function(err) {
-            if (err) {
-                callback(err);
+    chrome.storage.local.get(TOKEN_KEY_TOPCODER, function(result) {
+        if (!result[TOKEN_KEY_TOPCODER]) {
+            async.waterfall([
+                promptTopCoder,
+                authenticateTopCoder
+            ], function(err) {
+                if (err) {
+                    callback(err);
+                    return;
+                }
+                callback();
                 return;
-            }
+            });
+        } else {
             callback();
             return;
-        });
-    } else {
-        callback();
-        return;
-    }
+        }
+    });
 }
 
 /**
@@ -264,20 +294,22 @@ function checkTopCoderAuthentication(callback) {
  * @param issueId - id of the issue
  * @param callback the callback function
  */
-function getIssue(issueId, callback) {
-    var url = '/repos/' + owner + '/' + repo + '/issues/' + issueId;
-    axios({
-        baseURL: GITHUB_URL,
-        headers: {
-            'authorization': 'bearer ' + localStorage[TOKEN_KEY_GITHUB]
-        },
-        method: 'get',
-        url: url + noCacheSuffix()
-    }).then(function(response) {
-        callback(null, response.data);
-    }, function(response) {
-        console.error(response);
-        callback(new Error('Github GET ' + url + ': ' + response.status + ' status code'));
+function getIssue(callback) {
+    chrome.storage.local.get(TOKEN_KEY_GITHUB, function(result) {
+        var url = '/repos/' + owner + '/' + repo + '/issues/' + issueId;
+        axios({
+            baseURL: GITHUB_URL,
+            headers: {
+                'authorization': 'bearer ' + result[TOKEN_KEY_GITHUB]
+            },
+            method: 'get',
+            url: url + noCacheSuffix()
+        }).then(function(response) {
+            callback(null, response.data);
+        }, function(response) {
+            console.error(response);
+            callback(new Error('Github GET ' + url + ': ' + response.status + ' status code'));
+        });
     });
 }
 
@@ -286,7 +318,7 @@ function getIssue(issueId, callback) {
  * @param callback - the callback function
  */
 function getCurrentIssue(callback) {
-   getIssue(issueId, callback);
+    getIssue(issueId, callback);
 }
 
 /**
@@ -295,47 +327,50 @@ function getCurrentIssue(callback) {
  * @param callback the callback function
  */
 function postIssue(issue, callback) {
-    axios.post(TC_ENDPOINT + 'challenges', issue, {
-        headers: {
-            'x-auth-access-token': localStorage[TOKEN_KEY_TOPCODER]
-        }
-    }).then(function(response) {
-        var data = response.data;
-        var msg;
-        if (data.success) {
-            msg = [
-                'Challenge created successfully',
-                'Challenge Url: ' + data.challengeURL
-            ];
-        } else {
-            msg = [
+    chrome.storage.local.get(TOKEN_KEY_TOPCODER, function(result) {
+        axios.post(getTCEndpoint() + 'challenges', issue, {
+            headers: {
+                'x-auth-access-token': result[TOKEN_KEY_TOPCODER]
+            }
+        }).then(function(response) {
+            var data = response.data;
+            var msg;
+            if (data.success) {
+                msg = [
+                    'Challenge created successfully',
+                    'Challenge Url: ' + data.challengeURL
+                ];
+            } else {
+                msg = [
+                    'Failed to create challenge',
+                    'Response body:',
+                    '```',
+                    JSON.stringify(data, null, 4),
+                    '```'
+                ];
+            }
+            callback(null, msg.join('\n'));
+        }, function(response) {
+            console.error(response);
+            if (response.status === 401) {
+                //token expired or revoked
+                removeChromeStorage(TOKEN_KEY_TOPCODER);
+                checkTopCoderAuthentication(function() {
+                    postIssue(issue, callback);
+                });
+                return;
+            }
+            var msg = [
                 'Failed to create challenge',
+                'Status code: ' + response.status,
                 'Response body:',
                 '```',
-                JSON.stringify(data, null, 4),
+                JSON.stringify(response.data || 'empty response', null, 4),
                 '```'
             ];
-        }
-        callback(null, msg.join('\n'));
-    }, function(response) {
-        console.error(response);
-        if (response.status === 401) {
-            //token expired or revoked
-            delete localStorage[TOKEN_KEY_TOPCODER];
-            checkTopCoderAuthentication(function() {
-                postIssue(issue, callback);
-            });
-            return;
-        }
-        var msg = [
-            'Failed to create challenge',
-            'Status code: ' + response.status,
-            'Response body:',
-            '```',
-            JSON.stringify(response.data || 'empty response', null, 4),
-            '```'
-        ];
-        callback(null, msg.join('\n'));
+
+            callback(null, msg.join('\n'));
+        });
     });
 }
 
@@ -345,23 +380,26 @@ function postIssue(issue, callback) {
  * @param {String} text the comment text
  * @param callback the callback function
  */
-function addComment(issueId, text, callback) {
-    var url = '/repos/' + owner + '/' + repo + '/issues/' + issueId + '/comments';
-    axios({
-        baseURL: GITHUB_URL,
-        headers: {
-            'authorization': 'bearer ' + localStorage[TOKEN_KEY_GITHUB]
-        },
-        data: {
-            body: text
-        },
-        method: 'post',
-        url: url
-    }).then(function() {
-        callback();
-    }, function(response) {
-        console.error(response);
-        callback(new Error('Github GET ' + url + ': ' + response.status + ' status code'));
+
+function addComment(text, callback) {
+    chrome.storage.local.get(TOKEN_KEY_GITHUB, function(result) {
+        var url = '/repos/' + owner + '/' + repo + '/issues/' + issueId + '/comments';
+        axios({
+            baseURL: GITHUB_URL,
+            headers: {
+                'authorization': 'bearer ' + result[TOKEN_KEY_GITHUB]
+            },
+            data: {
+                body: text
+            },
+            method: 'post',
+            url: url
+        }).then(function() {
+            callback();
+        }, function(response) {
+            console.error(response);
+            callback(new Error('Github GET ' + url + ': ' + response.status + ' status code'));
+        });
     });
 }
 
@@ -402,13 +440,16 @@ function launchOnTC(callback) {
     });
 }
 
+<< << << < HEAD
 /**
  * Get an araay of ids of selected issues
  * @param callback - the callback function
  */
 function getSelectedIssues(callback) {
     var issueIds = $('input[type="checkbox"][name="issues\\[\\]"]:checked')
-      .map(function(){return $(this).val();}).get();
+        .map(function() {
+            return $(this).val();
+        }).get();
     if (issueIds.length == 0) {
         callback(new Error('No issues selected'));
     } else {
@@ -424,14 +465,14 @@ function getSelectedIssues(callback) {
 function postIssues(issueIds, callback) {
     async.each(issueIds, function(issueId, postIssueCallback) {
         async.waterfall([
-          function(cb) {
-              cb(null, issueId);
-          },
-          getIssue,
-          postIssue,
-          function(text, cb) {
-              addComment(issueId, text, cb);
-          }
+            function(cb) {
+                cb(null, issueId);
+            },
+            getIssue,
+            postIssue,
+            function(text, cb) {
+                addComment(issueId, text, cb);
+            }
         ], function(err) {
             postIssueCallback();
         })
@@ -464,6 +505,8 @@ function launchMultipleOnTC(callback) {
     });
 }
 
+
+setEnv();
 //initial load
 injectButton();
 injectMultipleLaunchButton();
