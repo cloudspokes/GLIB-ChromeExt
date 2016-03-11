@@ -322,6 +322,61 @@ function getCurrentIssue(callback) {
 }
 
 /**
+ * Retrieves project id related to the issue repository.
+ * If no project id found prompt will be given to add project id
+ *
+ * @param issue The issue to get related repo url
+ * @param callback The callback function
+ */
+function getProjectId(issue, callback) {
+    chrome.storage.local.get("repoMap", function(result) {
+        var pId = result.repoMap.reduce(function(next, curr) {
+            if(curr) return curr;
+            if(next.repoURL === issue.repository_url) curr = issue.repository_url;
+            return curr;
+        }, undefined);
+
+        if(!pId) {
+            vex.dialog.open({
+                message: 'Enter Project Id for this repository',
+                className: 'vex-theme-os',
+                input: '<input name=\"pId\" type=\"text\" placeholder=\"Project Id\" required />',
+                buttons: [
+                    $.extend({}, vex.dialog.buttons.YES, {
+                        text: 'Enter'
+                    }),
+                    $.extend({}, vex.dialog.buttons.NO, {
+                        text: 'Cancel'
+                    })
+                ],
+                callback: function(data) {
+                    if (data === false) {
+                        callback(new Error('Project Id not defined for this repository'));
+                        return;
+                    }
+                    var mapObj = {
+                        "projectId": data.pId,
+                        "repoURL": issue.repository_url
+                    };
+
+                    if (result.repoMap == undefined || result.repoMap.length == 0) {
+                        setChromeStorage("repoMap", [mapObj]);
+                    } else {
+                        /* Push to existing data */
+                        result.repoMap.push(mapObj);
+                        setChromeStorage("repoMap", result.repoMap);
+                    }
+                    issue.tc_project_id = data.pId;
+                    callback(null, issue)
+                }
+            });
+        } else {
+            issue.tc_project_id = pId;
+            callback(null, issue);
+        }
+    })
+}
+/**
  * Post issue to TC endpoint and format response
  * @param {Object} issue the github issue to post
  * @param callback the callback function
@@ -420,9 +475,8 @@ function launchOnTC(callback) {
         checkGithubAuthentication,
         checkTopCoderAuthentication,
         getCurrentIssue,
-        function(issue, cb) {
-            postIssue(issue, cb);
-        },
+        getProjectId,
+        postIssue,
         addCommentToCurrentIssue
     ], function(err) {
         if (err) {
@@ -469,12 +523,9 @@ function postIssues(issueIds, callback) {
             function(cb) {
                 cb(null, iiD);
             },
-            function(iiD, cb) {
-                getIssue(iiD, cb);
-            },
-            function(issue, cb) {
-                postIssue(issue, cb);
-            },
+            getIssue,
+            getProjectId,
+            postIssue,
             function(text, cb) {
                 addComment(iiD, text, cb);
             }
