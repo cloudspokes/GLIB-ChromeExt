@@ -20,6 +20,10 @@
     "axios": true,
     "OAuth": true,
     "OAUTH_API_KEY": true,
-    "TC_ENDPOINT": true
+    "TC_ENDPOINT": true,
+    "vex": true,
+    "TC_ENDPOINT_DEV": true,
+    "TC_ENDPOINT_PROD": true,
+    "$": true
   }
 }

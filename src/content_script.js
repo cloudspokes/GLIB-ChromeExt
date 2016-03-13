@@ -142,7 +142,6 @@ function injectMultipleLaunchButton() {
         btn.addEventListener('click', function() {
             btn.setAttribute('disabled', 'disabled');
             btn.innerText = 'Processing...';
-            issueIds = [];
             launchMultipleOnTC(function() {
                 btn.removeAttribute('disabled');
                 btn.innerText = 'Topcoder';
@@ -329,14 +328,18 @@ function getCurrentIssue(callback) {
  * @param callback The callback function
  */
 function getProjectId(issue, callback) {
-    chrome.storage.local.get("repoMap", function(result) {
-        var pId = result.repoMap.reduce(function(next, curr) {
-            if(curr) return curr;
-            if(next.repoURL === issue.repository_url) curr = issue.repository_url;
+    chrome.storage.local.get('repoMap', function(result) {
+        var pId = result && result.repoMap ? result.repoMap.reduce(function(curr, next) {
+            if (curr) {
+                return curr;
+            }
+            if (next.repoURL === issue.repository_url) {
+                curr = next.projectId;
+            }
             return curr;
-        }, undefined);
-
-        if(!pId) {
+        }, undefined) : undefined;
+        
+        if (!pId) {
             vex.dialog.open({
                 message: 'Enter Project Id for this repository',
                 className: 'vex-theme-os',
@@ -351,30 +354,30 @@ function getProjectId(issue, callback) {
                 ],
                 callback: function(data) {
                     if (data === false) {
-                        callback(new Error('Project Id not defined for this repository'));
+                        callback(new Error('The popup was closed'));
                         return;
                     }
                     var mapObj = {
-                        "projectId": data.pId,
-                        "repoURL": issue.repository_url
+                        projectId: data.pId,
+                        repoURL: issue.repository_url
                     };
 
-                    if (result.repoMap == undefined || result.repoMap.length == 0) {
-                        setChromeStorage("repoMap", [mapObj]);
+                    if (result.repoMap === undefined || result.repoMap.length === 0) {
+                        setChromeStorage('repoMap', [mapObj]);
                     } else {
                         /* Push to existing data */
                         result.repoMap.push(mapObj);
-                        setChromeStorage("repoMap", result.repoMap);
+                        setChromeStorage('repoMap', result.repoMap);
                     }
                     issue.tc_project_id = data.pId;
-                    callback(null, issue)
+                    callback(null, issue);
                 }
             });
         } else {
             issue.tc_project_id = pId;
             callback(null, issue);
         }
-    })
+    });
 }
 /**
  * Post issue to TC endpoint and format response
@@ -484,8 +487,8 @@ function launchOnTC(callback) {
                 callback();
                 return;
             }
-            console.error(err);
             if (err.message !== 'The popup was closed') {
+                console.error(err);
                 alert('An error occurred: ' + err.message);
             }
         } else {
@@ -505,7 +508,7 @@ function getSelectedIssues(callback) {
         .map(function() {
             return $(this).val();
         }).get();
-    if (issueIds.length == 0) {
+    if (issueIds.length === 0) {
         callback(new Error('No issues selected'));
     } else {
         callback(null, issueIds);
@@ -518,7 +521,7 @@ function getSelectedIssues(callback) {
  * @param callback - the callback function
  */
 function postIssues(issueIds, callback) {
-    async.each(issueIds, function(iiD, postIssueCallback) {
+    async.eachSeries(issueIds, function(iiD, postIssueCallback) {
         async.waterfall([
             function(cb) {
                 cb(null, iiD);
@@ -529,9 +532,9 @@ function postIssues(issueIds, callback) {
             function(text, cb) {
                 addComment(iiD, text, cb);
             }
-        ], function(err) {
+        ], function() {
             postIssueCallback();
-        })
+        });
     }, function(err) {
         callback(err);
     });
