@@ -142,7 +142,6 @@ function injectMultipleLaunchButton() {
         btn.addEventListener('click', function() {
             btn.setAttribute('disabled', 'disabled');
             btn.innerText = 'Processing...';
-            issueIds = [];
             launchMultipleOnTC(function() {
                 btn.removeAttribute('disabled');
                 btn.innerText = 'Topcoder';
@@ -322,6 +321,65 @@ function getCurrentIssue(callback) {
 }
 
 /**
+ * Retrieves project id related to the issue repository.
+ * If no project id found prompt will be given to add project id
+ *
+ * @param issue The issue to get related repo url
+ * @param callback The callback function
+ */
+function getProjectId(issue, callback) {
+    chrome.storage.local.get('repoMap', function(result) {
+        var pId = result && result.repoMap ? result.repoMap.reduce(function(curr, next) {
+            if (curr) {
+                return curr;
+            }
+            if (next.repoURL === issue.repository_url) {
+                curr = next.projectId;
+            }
+            return curr;
+        }, undefined) : undefined;
+        
+        if (!pId) {
+            vex.dialog.open({
+                message: 'Enter Project Id for this repository',
+                className: 'vex-theme-os',
+                input: '<input name=\"pId\" type=\"text\" placeholder=\"Project Id\" required />',
+                buttons: [
+                    $.extend({}, vex.dialog.buttons.YES, {
+                        text: 'Enter'
+                    }),
+                    $.extend({}, vex.dialog.buttons.NO, {
+                        text: 'Cancel'
+                    })
+                ],
+                callback: function(data) {
+                    if (data === false) {
+                        callback(new Error('The popup was closed'));
+                        return;
+                    }
+                    var mapObj = {
+                        projectId: data.pId,
+                        repoURL: issue.repository_url
+                    };
+
+                    if (result.repoMap === undefined || result.repoMap.length === 0) {
+                        setChromeStorage('repoMap', [mapObj]);
+                    } else {
+                        /* Push to existing data */
+                        result.repoMap.push(mapObj);
+                        setChromeStorage('repoMap', result.repoMap);
+                    }
+                    issue.tc_project_id = data.pId;
+                    callback(null, issue);
+                }
+            });
+        } else {
+            issue.tc_project_id = pId;
+            callback(null, issue);
+        }
+    });
+}
+/**
  * Post issue to TC endpoint and format response
  * @param {Object} issue the github issue to post
  * @param callback the callback function
@@ -420,9 +478,8 @@ function launchOnTC(callback) {
         checkGithubAuthentication,
         checkTopCoderAuthentication,
         getCurrentIssue,
-        function(issue, cb) {
-            postIssue(issue, cb);
-        },
+        getProjectId,
+        postIssue,
         addCommentToCurrentIssue
     ], function(err) {
         if (err) {
@@ -430,8 +487,8 @@ function launchOnTC(callback) {
                 callback();
                 return;
             }
-            console.error(err);
             if (err.message !== 'The popup was closed') {
+                console.error(err);
                 alert('An error occurred: ' + err.message);
             }
         } else {
@@ -451,7 +508,7 @@ function getSelectedIssues(callback) {
         .map(function() {
             return $(this).val();
         }).get();
-    if (issueIds.length == 0) {
+    if (issueIds.length === 0) {
         callback(new Error('No issues selected'));
     } else {
         callback(null, issueIds);
@@ -464,23 +521,20 @@ function getSelectedIssues(callback) {
  * @param callback - the callback function
  */
 function postIssues(issueIds, callback) {
-    async.each(issueIds, function(iiD, postIssueCallback) {
+    async.eachSeries(issueIds, function(iiD, postIssueCallback) {
         async.waterfall([
             function(cb) {
                 cb(null, iiD);
             },
-            function(iiD, cb) {
-                getIssue(iiD, cb);
-            },
-            function(issue, cb) {
-                postIssue(issue, cb);
-            },
+            getIssue,
+            getProjectId,
+            postIssue,
             function(text, cb) {
                 addComment(iiD, text, cb);
             }
-        ], function(err) {
+        ], function() {
             postIssueCallback();
-        })
+        });
     }, function(err) {
         callback(err);
     });
