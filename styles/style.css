@@ -1,0 +1,14 @@
+
+.btn-topcoder{
+    background: url(../images/logoBtn.png) 3px center no-repeat, linear-gradient(#fcfcfc, #eee);
+    width: 110px;
+    text-align: right;
+
+}
+.btn-topcoder:hover{
+    background: url(../images/logoBtn.png) 3px center no-repeat, linear-gradient(#eee, #ddd);
+}
+
+.subnav div .right {
+    margin-left: 10px;
+}
