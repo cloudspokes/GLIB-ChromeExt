@@ -26,6 +26,7 @@
             "lib/oauth.js",
             "lib/jquery.js",
             "lib/vex/vex.combined.min.js",
+            "src/vendor/Github.js",
             "src/content_script.js"
         ],
         "run_at": "document_start"
