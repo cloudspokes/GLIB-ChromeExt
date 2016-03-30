@@ -1,0 +1,33 @@
+{
+  "name": "glib-chrome-ext",
+  "version": "1.0.0",
+  "description": "",
+  "main": "config.js",
+  "directories": {
+    "test": "test"
+  },
+  "engines": {
+    "node": "4.2.x",
+    "npm": "~2.14.12"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "jsdom": "^8.1.0",
+    "mocha": "^2.4.5",
+    "sinon": "^1.17.3"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gbockus/GLIB-ChromeExt.git"
+  },
+  "author": "TC_CODER",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/gbockus/GLIB-ChromeExt/issues"
+  },
+  "homepage": "https://github.com/gbockus/GLIB-ChromeExt#readme"
+}
