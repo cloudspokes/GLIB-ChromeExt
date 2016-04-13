@@ -3,9 +3,22 @@
 
 ## Configuration
 
-`config.js` contains configuration
+`src/config.js` contains configuration
 `OAUTH_API_KEY` the API Key from https://oauth.io/
-`TC_ENDPOINT` the topcoder endpoint where issue details are posted, add same url to `permissions` in `manifest.json` (it must end with `*`)
+`TC_ENDPOINT_DEV` (for development mode) or `TC_ENDPOINT_PROD` (for production mode) the topcoder endpoint where issue details are posted, add same url to `permissions` in `manifest.json` (it must end with `*`)
+`EXTENSION_ID` - the id of your chrome extension in development mode extension should be always `kbdpmophclfhglceikdgbcoambjjgkgb`, because it depends on `key` field from `manifest.json`  
+When built to `.crx` package, this extension id will change (for current key.pem it will be `phfneeihkekjcfoepileggaaghickefj`). This is needed for callback urls in oauth2 clients.
+
+`OAUTH_APPS` contains `map<String, Object>` for available oauth2 providers (only `gitlab` for now)
+Each object should contain properties
+- `clientId` the client id
+- `clientSecret` the client secret
+- `redirectUri` the redirect url, path in Uri can be any
+- `scope` the oauth2 scope
+- `authorizeUrl` the url for authorization
+- `tokenUrl` the url for token exchange
+Only `clientID`, `clientSecret` and `redirectUri` should be updated.
+
 
 ### Setup github app
 - open https://github.com/settings/developers
@@ -14,6 +27,15 @@
 - set `Authorization callback URL` to `https://oauth.io/auth`
 - copy `Client ID` and `Client Secret` it will be needed in oauth.io setup
 
+### Setup gitlab app
+- open https://gitlab.com/profile/applications
+- enter any name and redirect URI (e.g. `https://kbdpmophclfhglceikdgbcoambjjgkgb.chromiumapp.org/oauth2`)
+- Click Save application
+- Copy `Application Id` to `clientId` and `Secret` to `clientSecret`
+- Note in `Authorized applications (5)` there is a bug and permissions can't be revoked. If you click on `Destroy` your application will be destroyed.
+
+### Setup jira app
+No setup needed. Authentication is based on cookies.
 
 ### Setup oauth.io
 - open https://oauth.io/ and go to dashboard
@@ -28,12 +50,20 @@
 - set `scope` to `repo`
 - click `Save changes`
 
+### Npm scripts
+node v5 is required https://nodejs.org/en/  
+Before your run any script install dependencies by `npm install`
+`npm test` - run unit tests  
+`npm run lint` or `npm run lint:fix` - run eslint check (NOTE: rules should be more strict, existing code doesn't pass validation)  
+`npm run build` - build extension to `crx` package. It will be built to `dist/GLIB-ChromeExt.crx`, Copy your private key to `certs/key.pem`  
+See https://rietta.com/blog/2012/01/27/openssl-generating-rsa-key-from-command/ how to generate it (you can use existing key)
 
 ### Load extension
 - Open chrome
 - go to chrome://extensions/
 - check `Developer mode` checkbox
-- click `Load unpacked extension...` and select GLIB-ChromeExt directory
+- click `Load unpacked extension...` and select `GLIB-ChromeExt/src` directory
+- If you want to add a `crx` package, you must drag&drop it to the chrome extension page
 
 
 ### Verification

@@ -1,19 +1,30 @@
 {
     "name": "GLIB-ChromeExt",
+    "key": "glib",
     "version": "1.0",
     "description": "GLIB-ChromeExt",
     "options_page": "options.html",
     "permissions": [
         "https://glib-mock.herokuapp.com/*",
         "https://glib-prod.herokuapp.com/*",
-        "storage"
+        "storage",
+        "identity"
     ],
     "externally_connectable": {
         "matches": ["https://oauth.io/*"]
     },
+    "background": {
+      "scripts": [
+        "lib/axios.js",
+        "config.js",
+        "background.js"
+      ]
+    },
     "content_scripts": [{
         "matches": [
-            "https://github.com/*"
+            "https://github.com/*",
+            "https://gitlab.com/*",
+            "https://appirio.atlassian.net/*"
         ],
         "css": [
             "lib/vex/vex.css",
@@ -26,8 +37,11 @@
             "lib/oauth.js",
             "lib/jquery.js",
             "lib/vex/vex.combined.min.js",
-            "src/vendor/Github.js",
-            "src/content_script.js"
+            "vendor/Base.js",
+            "vendor/Github.js",
+            "vendor/Gitlab.js",
+            "vendor/Jira.js",
+            "content_script.js"
         ],
         "run_at": "document_start"
     }],
