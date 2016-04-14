@@ -1,0 +1,28 @@
+
+.btn-topcoder {
+  background: url(../images/logoBtn.png) 3px center no-repeat, linear-gradient(#fcfcfc, #eee) !important;
+  width: 110px !important;
+  text-align: right !important;
+  border: 1px solid #d5d5d5 !important;
+}
+
+.btn-topcoder:hover {
+  background: url(../images/logoBtn.png) 3px center no-repeat, linear-gradient(#eee, #ddd) !important;
+}
+
+.btn-topcoder[disabled] {
+  background-image: none !important;
+}
+
+/* jira */
+.toolbar-trigger.btn-topcoder {
+  outline: none !important;
+}
+/* fix extra margin for jira if button group is empty */
+.issue-header .command-bar .toolbar-group:empty {
+  display: none;
+}
+
+.subnav div .right {
+  margin-left: 10px;
+}
