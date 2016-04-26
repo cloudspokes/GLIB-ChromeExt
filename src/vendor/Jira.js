@@ -9,8 +9,8 @@ class JiraVendor extends BaseVendor {
   /**
    * @constructor
    */
-  constructor() {
-    super();
+  constructor(domain) {
+    super(domain);
     // after comment is added, comment is focused but page is not scrolled to the bottom
     // scroll to bottom if url contains `scroll-bottom` query string
     const reg = /scroll-bottom=(comment-\d+)/;
@@ -27,7 +27,7 @@ class JiraVendor extends BaseVendor {
 
   /** @inheritdoc */
   get baseUrl() {
-    return 'https://appirio.atlassian.net/rest/api/2';
+    return `https://${this.domain}/rest/api/2`;
   }
 
   /** @inheritdoc */
@@ -95,7 +95,7 @@ class JiraVendor extends BaseVendor {
       if (err) {
         return callback(err);
       }
-      issue.repository_url = `https://appirio.atlassian.net/browse/${this.projectKey}`;
+      issue.repository_url = `https://${this.domain}/browse/${this.projectKey}`;
       callback(err, issue);
     });
   }

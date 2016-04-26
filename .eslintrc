@@ -36,6 +36,12 @@
     "checkTopCoderAuthentication": true,
     "setChromeStorage": true,
     "getTCEndpoint": true,
-    "OAUTH_APPS": true
+    "OAUTH_APPS": true,
+    "DEFAULT_GITHUB_DOMAIN": true,
+    "DEFAULT_GITLAB_DOMAIN": true,
+    "DEFAULT_JIRA_DOMAIN": true,
+    "DOMAIN_KEY_GITHUB": true,
+    "DOMAIN_KEY_GITLAB": true,
+    "DOMAIN_KEY_JIRA": true
   }
 }

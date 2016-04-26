@@ -5,6 +5,7 @@
  * @class
  */
 class GithubVendor extends BaseVendor {
+
   /** @inheritdoc */
   get tokenKey() {
     return 'glib::github_token';
@@ -12,7 +13,7 @@ class GithubVendor extends BaseVendor {
 
   /** @inheritdoc */
   get baseUrl() {
-    return 'https://api.github.com/';
+    return `https://api.${this.domain}/`;
   }
 
   /** @inheritdoc */

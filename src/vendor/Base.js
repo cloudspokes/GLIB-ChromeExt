@@ -7,6 +7,16 @@
 class BaseVendor {
 
   /**
+   * @constructor
+   */
+  constructor(domain) {
+    if (!domain) {
+      throw new Error('domain is required');
+    }
+    this.domain = domain;
+  }
+
+  /**
    * Get key for local storage
    * @returns {string}
    * @abstract

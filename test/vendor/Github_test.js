@@ -20,10 +20,14 @@ describe('Github Vendor function.', function () {
       if (err) {
         return beforeDone(err);
       }
-      Github = new GithubVendor();
+      Github = new GithubVendor('github.com');
       $ = window.jQuery;
       beforeDone();
     });
+  });
+
+  it('Should throw if domain is not provided', function () {
+    expect(() => new GithubVendor()).to.throw(/domain is required/);
   });
 
   it('Should verify Github object.', function () {

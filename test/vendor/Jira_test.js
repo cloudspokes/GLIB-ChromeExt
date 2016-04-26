@@ -18,10 +18,14 @@ describe('Jira Vendor function.', function () {
       if (err) {
         return beforeDone(err);
       }
-      Jira = new JiraVendor();
+      Jira = new JiraVendor('appirio.atlassian.net');
       $ = window.jQuery;
       beforeDone();
     });
+  });
+
+  it('Should throw if domain is not provided', function () {
+    expect(() => new JiraVendor()).to.throw(/domain is required/);
   });
 
   it('Should verify Jira object.', function () {
