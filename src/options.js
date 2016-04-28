@@ -15,6 +15,8 @@ var TOKEN_KEY_GITLAB = 'glib::gitlab_token';
 var TOKEN_KEY_TOPCODER = 'glib::topcoder_token';
 var ADD_MASS_DELIMETER = '###';
 var ENVIRONMENT = 'glib::environment';
+var DOMAIN_REGEX = /^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9](?:\.[a-zA-Z]{2,})+$/i;
+var VALIDATE_TIMEOUT = 1000; // show validation error 1s after key up
 
 /**
  * Set the value in Chrome Storage
@@ -32,7 +34,87 @@ function removeChromeStorage(key) {
   chrome.storage.local.remove(key);
 }
 
+/**
+ * Initialize input field and reset button for vendor domain configuration
+ * Field is automatically saved to storage on any change
+ * @param selector the jquery selector for button
+ * @param key the local storage key
+ * @param defaultDomain the default domain (placeholder value)
+ */
+function _initDomainField(selector, key, defaultDomain) {
+  const $input = $(selector);
+  const $reset = $input.next('.reset');
+  const $error = $('<div class="error">Invalid domain</div>');
+  $input.parent().append($error);
+  $error.hide();
+  let timeoutId;
+  $input.attr('placeholder', defaultDomain);
+
+  // show/hide error state
+  const toggleError = (isValid) => {
+    if (isValid) {
+      $input.removeClass('is-error');
+      $error.hide();
+    } else {
+      $input.addClass('is-error');
+      $error.show();
+    }
+  };
+
+  // load value from local storage
+  chrome.storage.local.get(key, function (result) {
+    const value = result[key];
+    if (value) {
+      $input.val(value);
+    } else {
+      $reset.prop('disabled', true);
+    }
+  });
+
+  // handle input change
+  // save and validate
+  $input.keyup(() => {
+    const value = $input.val();
+    let isValid = true;
+    if (value && value.trim().length) {
+      isValid = DOMAIN_REGEX.test(value);
+      if (isValid) {
+        setChromeStorage(key, value);
+      }
+      $reset.prop('disabled', false);
+    } else {
+      removeChromeStorage(key);
+      $reset.prop('disabled', true);
+    }
+    clearTimeout(timeoutId);
+    toggleError(true);
+    timeoutId = setTimeout(() => {
+      toggleError(isValid);
+    }, VALIDATE_TIMEOUT);
+  });
+
+  // reset value
+  $reset.click(() => {
+    vex.dialog.confirm({
+      message: 'Are you sure to reset this domain ?',
+      callback: function (value) {
+        if (!value) {
+          return;
+        }
+        removeChromeStorage(key);
+        $reset.prop('disabled', true);
+        toggleError(true);
+        $input.val('');
+      }
+    });
+  });
+}
+
 $(document).ready(function () {
+  _initDomainField('#githubDomain', DOMAIN_KEY_GITHUB, DEFAULT_GITHUB_DOMAIN);
+  _initDomainField('#gitlabDomain', DOMAIN_KEY_GITLAB, DEFAULT_GITLAB_DOMAIN);
+  _initDomainField('#jiraDomain', DOMAIN_KEY_JIRA, DEFAULT_JIRA_DOMAIN);
+
     /* initialization for vex library */
   vex.defaultOptions.className = 'vex-theme-os';
     /* Onload populate mappings from Chrome Storage */
@@ -76,7 +158,7 @@ $(document).ready(function () {
   });
 
     /* Delete GitHub and TopCoder tokens */
-  $('.delete').click(function () {
+  $('.delete:not(.reset)').click(function () {
     var self = this;
     vex.dialog.confirm({
       message: 'Are you sure to delete the token ?',

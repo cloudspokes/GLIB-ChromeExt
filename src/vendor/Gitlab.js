@@ -12,7 +12,7 @@ class GitlabVendor extends BaseVendor {
 
   /** @inheritdoc */
   get baseUrl() {
-    return 'https://gitlab.com/api/v3';
+    return `https://${this.domain}/api/v3`;
   }
 
   /** @inheritdoc */
@@ -79,7 +79,7 @@ class GitlabVendor extends BaseVendor {
       if (!issue) {
         return callback(new Error('Issue not found'));
       }
-      issue.repository_url = `http://gitlab.com/${this.owner}/${this.repo}`;
+      issue.repository_url = `http://${this.domain}/${this.owner}/${this.repo}`;
       callback(err, issue);
     });
   }

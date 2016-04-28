@@ -19,10 +19,14 @@ describe('Gitlab Vendor function.', function () {
       if (err) {
         return beforeDone(err);
       }
-      Gitlab = new GitlabVendor();
+      Gitlab = new GitlabVendor('gitlab.com');
       $ = window.jQuery;
       beforeDone();
     });
+  });
+
+  it('Should throw if domain is not provided', function () {
+    expect(() => new GitlabVendor()).to.throw(/domain is required/);
   });
 
   it('Should verify Gitlab object.', function () {

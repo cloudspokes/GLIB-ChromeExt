@@ -25,3 +25,11 @@ var OAUTH_APPS = {
     tokenUrl: 'https://gitlab.com/oauth/token'
   }
 };
+
+// Shared constants, do not change
+var DEFAULT_GITHUB_DOMAIN = 'github.com';
+var DEFAULT_GITLAB_DOMAIN = 'gitlab.com';
+var DEFAULT_JIRA_DOMAIN = 'appirio.atlassian.net';
+var DOMAIN_KEY_GITHUB = 'glib::github_domain';
+var DOMAIN_KEY_GITLAB = 'glib::gitlab_domain';
+var DOMAIN_KEY_JIRA = 'glib::jira_domain';

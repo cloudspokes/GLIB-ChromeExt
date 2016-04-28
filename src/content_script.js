@@ -43,19 +43,60 @@ function getTCEndpoint() {
   return (isDevEnvironment ? TC_ENDPOINT_DEV : TC_ENDPOINT_PROD);
 }
 
+
+/**
+ * Initiialize vendor if domain matches current window location
+ * @param  {Class} Costructor the vendor constructor
+ * @param  {String} key the key storage for domain setting
+ * @param  {String} defaultDomain the default domain
+ * @return {Object} the vendor object or null
+ */
+function getVendor(Costructor, key, defaultDomain) {
+  return new Promise((resolve) => {
+    chrome.storage.local.get(key, function (result) {
+      const domain = result[key] || defaultDomain;
+      if (location.host.toLowerCase() === domain.toLowerCase()) {
+        resolve(new Costructor(domain));
+      } else {
+        resolve();
+      }
+    });
+  });
+}
+
 /**
  * Set the vendor variable.
+ * @returns {Promise}
  */
 function setVendor() {
-  if (location.host === 'github.com') {
-    vendor = new GithubVendor();
+  const promises = [
+    getVendor(GithubVendor, DOMAIN_KEY_GITHUB, DEFAULT_GITHUB_DOMAIN),
+    getVendor(GitlabVendor, DOMAIN_KEY_GITLAB, DEFAULT_GITLAB_DOMAIN),
+    getVendor(JiraVendor, DOMAIN_KEY_JIRA, DEFAULT_JIRA_DOMAIN)
+  ];
+  return Promise.all(promises).then((results) => {
+    results.forEach((result) => {
+      if (result) {
+        vendor = result;
+      }
+    });
+  });
+}
+
+/**
+ * Inject html style node if not exists
+ * @param  {String} url the stylesheet url
+ * @param  {String} id the id of element
+ */
+function injectStyleNode(url, id) {
+  if (document.getElementById(id)) {
+    return;
   }
-  if (location.host === 'gitlab.com') {
-    vendor = new GitlabVendor();
-  }
-  if (location.host === 'appirio.atlassian.net') {
-    vendor = new JiraVendor();
-  }
+  var node = document.createElement('link');
+  node.rel = 'stylesheet';
+  node.id = id;
+  node.href = chrome.extension.getURL(url);
+  document.body.appendChild(node);
 }
 
 /**
@@ -64,10 +105,9 @@ function setVendor() {
  * (when new comment is added or because of html5 navigation).
  */
 function injectStyles() {
-  var node = document.createElement('link');
-  node.rel = 'stylesheet';
-  node.href = chrome.extension.getURL('styles/style.css');
-  document.body.appendChild(node);
+  injectStyleNode('styles/style.css', 'GLIB_STYLE');
+  injectStyleNode('lib/vex/vex.css', 'GLIB_STYLE_VEX');
+  injectStyleNode('lib/vex/vex-theme-os.css', 'GLIB_STYLE_VEX_THEME');
 }
 
 function injectButton() {
@@ -134,8 +174,6 @@ function injectMultipleLaunchButton() {
     }, CHECK_INTERVAL);
   }
 }
-
-
 
 /**
  * Get suffix for url that will prevent caching
@@ -327,7 +365,8 @@ function launchMultipleOnTC(callback) {
 
 
 setEnv();
-setVendor();
-// initial load
-injectButton();
-injectMultipleLaunchButton();
+setVendor().then(() => {
+  // initial load
+  injectButton();
+  injectMultipleLaunchButton();
+});

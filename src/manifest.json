@@ -22,13 +22,7 @@
     },
     "content_scripts": [{
         "matches": [
-            "https://github.com/*",
-            "https://gitlab.com/*",
-            "https://appirio.atlassian.net/*"
-        ],
-        "css": [
-            "lib/vex/vex.css",
-            "lib/vex/vex-theme-os.css"
+            "<all_urls>"
         ],
         "js": [
             "config.js",
@@ -47,7 +41,9 @@
     }],
     "web_accessible_resources": [
         "images/*.png",
-        "styles/style.css"
+        "styles/style.css",
+        "lib/vex/vex.css",
+        "lib/vex/vex-theme-os.css"
     ],
     "manifest_version": 2
 }

@@ -100,3 +100,13 @@ button{
 	margin-left: 0.8%;
 	cursor: pointer;
 }
+
+.error {
+	color: red;
+	margin-top: 3px;
+}
+
+.is-error {
+	border: 1px solid red;
+	color: red;
+}
