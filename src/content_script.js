@@ -12,7 +12,7 @@
  * @version 1.1
  */
 
-var CHECK_INTERVAL = 50;
+var CHECK_INTERVAL = 1000;
 var TOKEN_KEY_TOPCODER = 'glib::topcoder_token';
 var ENVIRONMENT = 'glib::environment';
 
@@ -61,14 +61,23 @@ function injectStyles() {
     var node = document.createElement('link');
     node.rel = 'stylesheet';
     node.href = chrome.extension.getURL('styles/style.css');
-    document.body.appendChild(node);
+
+    if (document && document.body) {
+        document.body.appendChild(node);
+        console.log('injected TC button styles');
+    } else {
+        console.log('tried to inject styles but could not');
+    }
 }
 
 function injectButton() {
     if (vendor) {
-        setInterval(function () {
+        var injector = setInterval(function() {
+            console.log('attempting TC button injection');
+
             if (document.getElementById('LAUNCH_ON_TC') || document.getElementById('LAUNCH_MULTIPLE_ON_TC')) {
                 //button already exists
+                console.log('TC button already exists');
                 return;
             }
 
@@ -82,10 +91,10 @@ function injectButton() {
             btn.className = 'btn btn-sm btn-default btn-topcoder';
             btn.innerHTML = 'Topcoder';
             btn.setAttribute('id', 'LAUNCH_ON_TC');
-            btn.addEventListener('click', function () {
+            btn.addEventListener('click', function() {
                 btn.setAttribute('disabled', 'disabled');
                 btn.innerText = 'Processing...';
-                launchOnTC(function () {
+                launchOnTC(function() {
                     btn.removeAttribute('disabled');
                     btn.innerText = 'Topcoder';
                 });
@@ -99,7 +108,7 @@ function injectButton() {
 function injectMultipleLaunchButton() {
     if (vendor) {
 
-        setInterval(function () {
+        setInterval(function() {
             if (document.getElementById('LAUNCH_MULTIPLE_ON_TC') || document.getElementById('LAUNCH_ON_TC')) {
                 //button already exists
                 return;
@@ -115,10 +124,10 @@ function injectMultipleLaunchButton() {
             btn.className = 'btn btn-default btn-topcoder';
             btn.innerHTML = 'Topcoder';
             btn.setAttribute('id', 'LAUNCH_MULTIPLE_ON_TC');
-            btn.addEventListener('click', function () {
+            btn.addEventListener('click', function() {
                 btn.setAttribute('disabled', 'disabled');
                 btn.innerText = 'Processing...';
-                launchMultipleOnTC(function () {
+                launchMultipleOnTC(function() {
                     btn.removeAttribute('disabled');
                     btn.innerText = 'Topcoder';
                 });
@@ -235,7 +244,7 @@ function getProjectId(issue, callback) {
             }
             return curr;
         }, undefined) : undefined;
-        
+
         if (!pId) {
             vex.dialog.open({
                 message: 'Enter Project Id for this repository',
@@ -329,7 +338,7 @@ function launchMultipleOnTC(callback) {
     });
 }
 
-
+console.log('staring injection of TC button');
 setEnv();
 setVendor();
 //initial load
