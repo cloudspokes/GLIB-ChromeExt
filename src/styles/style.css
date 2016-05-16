@@ -1,17 +1,20 @@
 
 .btn-topcoder {
-  background: url(../images/logoBtn.png) 3px center no-repeat, linear-gradient(#fcfcfc, #eee) !important;
+  background: url(chrome-extension://__MSG_@@extension_id__/images/logoBtn.png) 3px center no-repeat, linear-gradient(#fcfcfc, #eee) !important;
   width: 110px !important;
   text-align: right !important;
   border: 1px solid #d5d5d5 !important;
+  display: inline-block !important;
 }
 
 .btn-topcoder:hover {
-  background: url(../images/logoBtn.png) 3px center no-repeat, linear-gradient(#eee, #ddd) !important;
+  background: url(chrome-extension://__MSG_@@extension_id__/images/logoBtn.png) 3px center no-repeat, linear-gradient(#eee, #ddd) !important;
+  display: inline-block !important;
 }
 
 .btn-topcoder[disabled] {
   background-image: none !important;
+  display: inline-block !important;
 }
 
 /* jira */
