@@ -210,45 +210,46 @@ function promptTopCoder(callback) {
     }
   });
 }
-/**
- * Authenticate with topcoder
- * @param callback the callback function
- */
-function authenticateTopCoder(username, password, callback) {
-  axios.post(getTCEndpoint() + 'oauth/access_token', {
-    'x_auth_username': username,
-    'x_auth_password': password
-  }).then(function (result) {
-    if (result.data.errorMessage) {
-      callback({
-        message: result.data.errorMessage
-      });
-    } else {
-      setChromeStorage(TOKEN_KEY_TOPCODER, result.data.x_auth_access_token);
-      callback();
-    }
-  }, function (err) {
-    callback(err);
-  });
-}
+// /**
+//  * Authenticate with topcoder
+//  * @param callback the callback function
+//  */
+// function authenticateTopCoder(username, password, callback) {
+//   axios.post(getTCEndpoint() + 'oauth/access_token', {
+//     'x_auth_username': username,
+//     'x_auth_password': password
+//   }).then(function (result) {
+//     if (result.data.errorMessage) {
+//       callback({
+//         message: result.data.errorMessage
+//       });
+//     } else {
+//       setChromeStorage(TOKEN_KEY_TOPCODER, result.data.x_auth_access_token);
+//       callback();
+//     }
+//   }, function (err) {
+//     callback(err);
+//   });
+// }
 
 /**
  * Ensure user is authenticated to topcoder
  * @param callback the callback function
  */
 function checkTopCoderAuthentication(callback) {
-  chrome.storage.local.get(TOKEN_KEY_TOPCODER, function (result) {
-    if (!result[TOKEN_KEY_TOPCODER]) {
-      async.waterfall([
-        promptTopCoder,
-        authenticateTopCoder
-      ], function (err) {
-        callback(err);
-      });
-    } else {
+
+  chrome.runtime.sendMessage({oAuthIG : true}, function (result)  {
+    if (isDevEnvironment) {
+      console.log("asked for an access token, received: ", result);
+    }
+    if (result.oAuthIGSuccess) {
+      setChromeStorage(TOKEN_KEY_TOPCODER, result.oAuthIGSuccess.access_token);
       callback();
+    } else {
+      callback({"error": "error"});
     }
   });
+
 }
 
 /**

@@ -10,7 +10,10 @@
     "node": "4.2.x",
     "npm": "~2.14.12"
   },
-  "dependencies": {},
+  "dependencies": {
+    "express": "^4.13.4",
+    "request-promise": "^3.0.0"
+  },
   "devDependencies": {
     "eslint": "^2.2.0",
     "eslint-config-standard": "^5.1.0",

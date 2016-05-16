@@ -70,3 +70,107 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   }
   return true;
 });
+
+function getChromeStorage(key, defaultValue) {
+  return new Promise((resolve) => {
+    chrome.storage.local.get(key, (obj) => {
+      const value = obj[key] || defaultValue;
+      resolve(value);
+    });
+  });
+}
+
+function setChromeStorage(key, value) {
+  const obj = {};
+  obj[key] = value;
+  chrome.storage.local.set(obj);
+}
+
+/**
+ * OAuthIGUser actual user of OAuthIGService using chrome API
+ */
+class ChromeOAuthIGUser {
+  /**
+   * @constructor 
+   *   - actual user of OAuthIGService. ChromeOAuthIGUser binds to chrome's message 
+   *     event(to handle token request from content_script.js) and to webRequest event
+   *     (to intercept 302 redirect uri from authorization server which contains access_token,
+   *     and resolve that back to service).   *     
+   *   - ChromeOAuthIGUser should send the GET request to the authorization server
+   *   - ChromeOAuthIGUser should intercept the redirect response from above request and
+   *     resolve the redirect uri which contains access_token back to OAuthIGService.
+   * @param  {function=} logger optional logger
+   * @return {object}    an OAuthIGUser that binds to chrome events to handle access_tokens
+   */
+  constructor (logger) {
+    const self = this;
+
+    this.setupTokenResolver = (resolve) => {
+      // use this._resolve to resolve access token uri back to the service
+      self._resolve = resolve;
+    }
+
+    this.logger = logger || (function (...argz) {
+      getChromeStorage(ENVIRONMENT, false)
+        .then((isDev) => {
+          isDev && console.log.apply(console, argz);
+        });      
+      });
+
+    // interecpt & block request to access_token redirect uris.    
+    getChromeStorage(TC_OAUTH_REDIRECT_URI_KEY, DEFAULT_TC_OAUTH_REDIRECT_URI)
+      .then((redirect_uri) => {
+        chrome.webRequest.onBeforeRequest.addListener(
+          function (details) {
+            self.logger("TC authorization redirect to", details.url);
+            self._resolve(details.url);
+            return {cancel: true};    
+          } 
+          ,{urls: [redirect_uri]}
+          ,["blocking"]
+        );
+      });    
+
+    // acutal message handler that responds to token requests from content_script.js
+    chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+      if (request.oAuthIG) {
+        self.logger("TC OAuth token request from content_script");    
+        oAuthIGSvc.getToken()
+          .then((token) => {
+            self.logger("sending token to content_script, ", token);
+            sendResponse({oAuthIGSuccess: token});
+          });
+      }
+    });        
+  } 
+
+  /**
+   * requestFunc sends actual GET request to oauth authorization endpoint.
+   *             note that ChromeOAuthIGUser have to intercept the redirect 
+   *             and resolve redirect uri containing access token back to OAuthIGService
+   * @param  {string} authUri authorization server uri passed from OAuthIGSerivce 
+   */
+  requestFunc (authUri) {
+    axios.get(authUri).catch((err) => {
+      this.logger("expected error: ", err);
+    }); // this will be redirected
+  }
+}
+
+const oAuthCfg = {
+  TC_OAUTH_TOKEN_KEY,
+  TC_OAUTH_URL_KEY,
+  TC_OAUTH_REDIRECT_URI_KEY,
+  TC_OAUTH_CLIENT_ID_KEY,
+  DEFAULT_TC_OAUTH_URL,
+  DEFAULT_TC_OAUTH_REDIRECT_URI,
+  DEFAULT_TC_OAUTH_CLIENT_ID,
+  ENVIRONMENT
+};
+
+const oAuthIGUser = new ChromeOAuthIGUser();
+const oAuthIGSvc = new OAuthIGService(getChromeStorage, setChromeStorage,
+                  oAuthIGUser.setupTokenResolver, oAuthIGUser.requestFunc, oAuthCfg);
+
+
+

@@ -8,15 +8,21 @@
         "https://glib-mock.herokuapp.com/*",
         "https://glib-prod.herokuapp.com/*",
         "storage",
-        "identity"
+        "identity",
+        "webRequest",
+        "webRequestBlocking",
+        "http://*/*",
+        "https://*/*"
     ],
     "externally_connectable": {
         "matches": ["https://oauth.io/*"]
     },
     "background": {
       "scripts": [
+        "lib/jquery.js",
         "lib/axios.js",
         "config.js",
+        "OAuthIGSvc.js",
         "background.js"
       ]
     },
@@ -46,4 +52,4 @@
         "lib/vex/vex-theme-os.css"
     ],
     "manifest_version": 2
-}
+} 

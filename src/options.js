@@ -110,10 +110,82 @@ function _initDomainField(selector, key, defaultDomain) {
   });
 }
 
+function _initOAuthIGField(selector, key, defaultValue) {
+  const $input = $(selector);
+  const $reset = $input.next('.reset');
+  const $error = $('<div class="error">Invalid</div>');
+  $input.parent().append($error);
+  $error.hide();
+  let timeoutId;
+  $input.attr('placeholder', defaultValue);
+
+  // show/hide error state
+  const toggleError = (isValid) => {
+    if (isValid) {
+      $input.removeClass('is-error');
+      $error.hide();
+    } else {
+      $input.addClass('is-error');
+      $error.show();
+    }
+  };
+
+  // load value from local storage
+  chrome.storage.local.get(key, function (result) {
+    const value = result[key];
+    if (value) {
+      $input.val(value);
+    } else {
+      $reset.prop('disabled', true);
+    }
+  });
+
+  // handle input change
+  // save and validate
+  $input.keyup(() => {
+    const value = $input.val();
+    let isValid = true;
+    if (value && value.trim().length) {
+      // isValid = DOMAIN_REGEX.test(value);
+      isValid = true;
+      if (isValid) {
+        setChromeStorage(key, value);
+      }
+      $reset.prop('disabled', false);
+    } else {
+      removeChromeStorage(key);
+      $reset.prop('disabled', true);
+    }
+    clearTimeout(timeoutId);
+    toggleError(true);
+    timeoutId = setTimeout(() => {
+      toggleError(isValid);
+    }, VALIDATE_TIMEOUT);
+  });
+
+  // reset value
+  $reset.click(() => {
+    vex.dialog.confirm({
+      message: 'Are you sure to reset?',
+      callback: function (value) {
+        if (!value) {
+          return;
+        }
+        removeChromeStorage(key);
+        $reset.prop('disabled', true);
+        toggleError(true);
+        $input.val('');
+      }
+    });
+  });
+}
 $(document).ready(function () {
   _initDomainField('#githubDomain', DOMAIN_KEY_GITHUB, DEFAULT_GITHUB_DOMAIN);
   _initDomainField('#gitlabDomain', DOMAIN_KEY_GITLAB, DEFAULT_GITLAB_DOMAIN);
   _initDomainField('#jiraDomain', DOMAIN_KEY_JIRA, DEFAULT_JIRA_DOMAIN);
+  _initOAuthIGField('#TCOAuthClientId', TC_OAUTH_CLIENT_ID_KEY, DEFAULT_TC_OAUTH_CLIENT_ID);
+  _initOAuthIGField('#TCOAuthRedirectUri', TC_OAUTH_REDIRECT_URI_KEY, DEFAULT_TC_OAUTH_REDIRECT_URI);
+  _initOAuthIGField('#TCOAuthServerUri', TC_OAUTH_URL_KEY, DEFAULT_TC_OAUTH_URL);
 
     /* initialization for vex library */
   vex.defaultOptions.className = 'vex-theme-os';
@@ -175,6 +247,7 @@ $(document).ready(function () {
           } else {
             $(".delete[type='topcoder']").prop('disabled', true);
             removeChromeStorage(TOKEN_KEY_TOPCODER);
+            removeChromeStorage(TC_OAUTH_TOKEN_KEY);
             $('#topCoderToken').val('');
           }
         }
