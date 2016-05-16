@@ -3,11 +3,9 @@
 
 /**
  * @typedef token
- * @property {string} access_token value of access_token
- * @property {string} token_type   type of token. "bearer"
- * @property {string} expires_in   an integer in string which means a token's lifetime
- * @property {int}    _expires_at   an integer, token's expire time in unix time in seconds.
- *                                 used internally to expire a saved token.
+ *          - a jwt token
+ * @param {string} bearer - jwt itself in packed form(converted to base64 and signed) with prepended "bearer " string.
+ *                          separate field is given for convenience, can be used for bearer authorization later.
  */
 
 /**
@@ -27,18 +25,17 @@
  */
 
 /**
- * @callback requestFunc - OAuthIGService will call this function with OAuth implicit grant authorization uri.
- *                         the user of the service is expected to make actually GET request by this funcion.
+ * @callback requestFunc - OAuthIGService will call this function with authUri.
+ *                         authUri is the authorization server's uri with querystrings built using client_id and redirect_uri.
+ *                         the user of the service is expected to do GET request to authUri and resolve the redirect location
+ *                         which contains the access token (or failure).
  * @param {string} authUri - OAuth
  */
 
 /**
- * @callback setupTokenResolver - setupTokenResolver will be called with a single argument, 
- *                                which resolves the recieved uri (which contains access_token) from 
- *                                oauth authorization endpoint. the user of OAuthIGService is expected to 
- *                                resolve the recived uri himself, to allow OAuthIGService to parse and save
- *                                the access token.
- * @param {function} resolve - resolve the access_token containing uri by this function.
+ * @callback setupTokenResolver - setupTokenResolver will be called with a single argument, a resolving function resolve.
+ *                                the function should be called with the redirect location from GET requesting authUri. 
+ * @param {function} resolve - resolve the access_token containing redirect location by this function.
  */
 
 class OAuthIGService {
@@ -50,20 +47,20 @@ class OAuthIGService {
    * @param  {setStorage} setStorage  - see setStorage
    * @param  {setupTokenResolver} setupTokenResolver  - see setupTokenResolver
    * @param  {requestFunc} requestFunc  - see requestFunc
-   * @param  {object} config   - configuration object. see background.js to see which values are supplied
-   * @param  {function=} logger  - 
+   * @param  {object} config   - configuration object. see background.js to see what should be supplied
+   * @param  {function=} logger  - default: console.log if dev environment set
    * @return {object} instance of OAuthIGService
    */
-  constructor(getStorage, setStorage, setupTokenResolver, requestFunc, config, logger) {
+  constructor(getStorage, setStorage, setupTokenResolver, requestFunc, config, logger, user) {
     var self = this;
     this.getStorage = getStorage;
     this.setStorage = setStorage;
-    this.setupTokenResolver = setupTokenResolver;
-    this.requestFunc = requestFunc;
+    this.setupTokenResolver = function (cb) { setupTokenResolver(cb) };
+    this.requestFunc = function (uri) { requestFunc(uri) };
     this.config = config;
     this.logger = logger || function () {
       var argz = Array.prototype.slice.call(arguments);
-      this.getStorage(config.ENVIRONMENT, false)
+      self.getStorage(config.ENVIRONMENT, false)
         .then((isDev) => {
           console.log.apply(console, argz);
 
@@ -76,11 +73,12 @@ class OAuthIGService {
   /**
    * getToken - returns token to the user. may utilize the previous token in storage
    *          or order user to make get request to authorization server and resolve
-   *          redirect uri which contians access token back to OAuthIGService.
+   *          redirect uri which contiais access token back to OAuthIGService.
    * @return {Promise<token>} promise for token
    */
   getToken() {
     this.logger("getting token");
+    var self = this;
     return new Promise((resolve, reject) => {
       const cfg = this.config;
       const log = this.logger;
@@ -89,35 +87,53 @@ class OAuthIGService {
         .then((result) => {
           log("lookup TC Token in storage");
           if (result) {
-            log(["found TC token in storage", result]);
+            log("found TC token in storage", result);
             // renew token if required.
-            this.renew(result).then(resolve);            
+            this.renew(result).then((result) => {
+              this.setStorage(cfg.TC_OAUTH_TOKEN_KEY, result);
+              resolve(result)
+            }).catch(reject);
+
           } else {
             log("no TC token in storage");
             // token does not exist, initiate authorize routine
             this.authorize().then((result) => {
-              log(["got TC token from request", result]);
+              log("got TC token from redirect", result);
               this.setStorage(cfg.TC_OAUTH_TOKEN_KEY, result);
               resolve(result);
-            });
+            }).catch(reject);
+
           }
         });
     });
   }
 
   /**
-   * authorize - order user to send request to authorization endpoint using implicit grant to obtain access_toekn
+   * authorize - after authorize() is called,
+   *             user is expected to actually do GET request using requestFunc
+   *             and resolve the redirect location using setupTokenResolver
    * @return {Promise<token>} 
    */
   authorize() {
-    return new Promise((resolve) => {
+    var self = this;
+    return new Promise((resolve, reject) => {
       const resolver = (tokenUri) => {
-        const token = extractParamsFromURIFragment(tokenUri.split("#", 2)[1]);
-        if (token.expires_in) {
-          const d = Math.floor(new Date().getTime() / 1000);        
-          token._expires_at = d + parseInt(token.expires_in, 10);
-        }
-        resolve(token);
+        if (tokenUri) {
+          const resp = extractParamsFromURIFragment(tokenUri.split("#", 2)[1]);
+          self.logger('response from authorization endpoint: ', resp);
+          if (resp.error) {
+            self.logger('error was in response, rejecting:', resp)
+            reject(resp);
+          } else {
+            const parsedJwt = jwt_decode(resp.access_token);
+            self.logger("successfully parsed a JWT: ", parsedJwt);
+            parsedJwt.bearer = 'Bearer "' + resp.access_token + '"';
+            resolve(parsedJwt);
+          } 
+        } else {
+          self.logger("did not recieve any redirect location response");
+          reject({error: "Error"});
+        }             
       }
 
       const cfg = this.config;
@@ -134,7 +150,7 @@ class OAuthIGService {
         const authUri = params[0] + '?response_type=token&' +
                         'client_id=' + params[1] + '&redirect_uri=' +
                         encodeURIComponent(params[2]);
-        log(["requesting TC Token", authUri]);
+        log("requesting TC Token", authUri);
 
         this.requestFunc(authUri);
       });
@@ -142,25 +158,28 @@ class OAuthIGService {
   }
 
   /**
-   * renew - renew a token if required using _expires_at
+   * renew - renew a jwt by checking jwt.exp
    * @param  {token} token - see token
    * @return {Promise<token>} - resolved reusing current token or requesting new token by authorize()
    */
   renew(token) {
     const log = this.logger;
-    return new Promise((resolve) => {
-      const now = Math.floor(new Date().getTime() / 1000);
+    return new Promise((resolve, reject) => {
+      let now = Math.floor(new Date().getTime() / 1000);
+
+      log("comparing now and exp: ", now, token.exp);
+      // now += 99999999999999999
       // if (now < token.expires_at) {        
 
-      if (token.expires_in && now < token._expires_at) {        
+      if (token.exp > now) {
+        log("resolving token without renewal");
         resolve(token);
       } else {
         // log(['now', now, 'expire', token.expires_at]);
-        log("renewal of token");
+        log("renewal of current jwt needed");
         this.authorize().then((result) => {
-          this.setStorage(this.config.TC_OAUTH_TOKEN_KEY, result);
           resolve(result);
-        });
+        }).catch(reject);
       }
     });
   }
@@ -170,7 +189,7 @@ class OAuthIGService {
  * extractParamsFromURIFragment - extract the URI fragment from the user agent's location object
  *                              reference https://dev.clever.com/instant-login/implicit-grant-flow
  * @param  {string} q - URI fragment to parse
- * @return {token}   
+ * @return {object}   
  */
 function extractParamsFromURIFragment(q) {
   const fragmentParams = {};

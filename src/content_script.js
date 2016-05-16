@@ -131,14 +131,38 @@ function injectButton() {
       btn.addEventListener('click', function () {
         btn.setAttribute('disabled', 'disabled');
         btn.innerText = 'Processing...';
-        launchOnTC(function () {
+
+        callSvcForToken(function () {
           btn.removeAttribute('disabled');
           btn.innerText = 'Topcoder';
         });
+
       });
       vendor.addButton(btn);
     }, CHECK_INTERVAL);
   }
+}
+
+function callSvcForToken(cb) {
+  console.log("requesting an access token using OAuth implicit grant from service");
+  chrome.runtime.sendMessage({oAuthIG : true}, function (result)  {
+    if (!result.oAuthIGResult.error) {
+      setChromeStorage(TOKEN_KEY_TOPCODER, result.oAuthIGResult.jwt);
+      var _display = {};
+      for (var i in result.oAuthIGResult.jwt) {
+        if (result.oAuthIGResult.jwt.hasOwnProperty(i) && i !== 'bearer') {
+          _display[i] = result.oAuthIGResult.jwt[i];
+        }
+      }
+      alert("received jwt from OAuth implicit grant: \n" + JSON.stringify(_display, null, 2));    
+      console.log("received jwt from OAuth implicit grant: ", result.oAuthIGResult.jwt);
+      // callback();
+    } else {
+      alert("got error, not jwt: \n" + JSON.stringify(result.oAuthIGResult.error, null, 2));
+      console.log("got error, not jwt: ", result.oAuthIGResult.error);
+    }
+    cb();
+  });
 }
 
 function injectMultipleLaunchButton() {
@@ -163,7 +187,7 @@ function injectMultipleLaunchButton() {
       btn.addEventListener('click', function () {
         btn.setAttribute('disabled', 'disabled');
         btn.innerText = 'Processing...';
-        launchMultipleOnTC(function () {
+        callSvcForToken(function () {
           btn.removeAttribute('disabled');
           btn.innerText = 'Topcoder';
         });
@@ -210,47 +234,7 @@ function promptTopCoder(callback) {
     }
   });
 }
-// /**
-//  * Authenticate with topcoder
-//  * @param callback the callback function
-//  */
-// function authenticateTopCoder(username, password, callback) {
-//   axios.post(getTCEndpoint() + 'oauth/access_token', {
-//     'x_auth_username': username,
-//     'x_auth_password': password
-//   }).then(function (result) {
-//     if (result.data.errorMessage) {
-//       callback({
-//         message: result.data.errorMessage
-//       });
-//     } else {
-//       setChromeStorage(TOKEN_KEY_TOPCODER, result.data.x_auth_access_token);
-//       callback();
-//     }
-//   }, function (err) {
-//     callback(err);
-//   });
-// }
 
-/**
- * Ensure user is authenticated to topcoder
- * @param callback the callback function
- */
-function checkTopCoderAuthentication(callback) {
-
-  chrome.runtime.sendMessage({oAuthIG : true}, function (result)  {
-    if (isDevEnvironment) {
-      console.log("asked for an access token, received: ", result);
-    }
-    if (result.oAuthIGSuccess) {
-      setChromeStorage(TOKEN_KEY_TOPCODER, result.oAuthIGSuccess.access_token);
-      callback();
-    } else {
-      callback({"error": "error"});
-    }
-  });
-
-}
 
 /**
  * Retrieves project id related to the issue repository.

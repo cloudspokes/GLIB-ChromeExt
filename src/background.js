@@ -92,23 +92,14 @@ function setChromeStorage(key, value) {
 class ChromeOAuthIGUser {
   /**
    * @constructor 
-   *   - actual user of OAuthIGService. ChromeOAuthIGUser binds to chrome's message 
-   *     event(to handle token request from content_script.js) and to webRequest event
-   *     (to intercept 302 redirect uri from authorization server which contains access_token,
-   *     and resolve that back to service).   *     
-   *   - ChromeOAuthIGUser should send the GET request to the authorization server
-   *   - ChromeOAuthIGUser should intercept the redirect response from above request and
-   *     resolve the redirect uri which contains access_token back to OAuthIGService.
+   *   - actual user of OAuthIGService.
+   *   - ChromeOAuthIGUser should send the GET request to the authorization server using requestFunc
+   *   - ChromeOAuthIGUser should resolve the redirect response from above request using setupTokenResolver   
    * @param  {function=} logger optional logger
    * @return {object}    an OAuthIGUser that binds to chrome events to handle access_tokens
    */
   constructor (logger) {
     const self = this;
-
-    this.setupTokenResolver = (resolve) => {
-      // use this._resolve to resolve access token uri back to the service
-      self._resolve = resolve;
-    }
 
     this.logger = logger || (function (...argz) {
       getChromeStorage(ENVIRONMENT, false)
@@ -117,20 +108,6 @@ class ChromeOAuthIGUser {
         });      
       });
 
-    // interecpt & block request to access_token redirect uris.    
-    getChromeStorage(TC_OAUTH_REDIRECT_URI_KEY, DEFAULT_TC_OAUTH_REDIRECT_URI)
-      .then((redirect_uri) => {
-        chrome.webRequest.onBeforeRequest.addListener(
-          function (details) {
-            self.logger("TC authorization redirect to", details.url);
-            self._resolve(details.url);
-            return {cancel: true};    
-          } 
-          ,{urls: [redirect_uri]}
-          ,["blocking"]
-        );
-      });    
-
     // acutal message handler that responds to token requests from content_script.js
     chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       if (request.oAuthIG) {
@@ -138,23 +115,49 @@ class ChromeOAuthIGUser {
         oAuthIGSvc.getToken()
           .then((token) => {
             self.logger("sending token to content_script, ", token);
-            sendResponse({oAuthIGSuccess: token});
+            sendResponse({oAuthIGResult: {
+              jwt: token
+            }});
+          })
+          .catch((resp) => {
+            self.logger("service failed to provide token: ", resp);
+            sendResponse({oAuthIGResult: {
+              error: resp
+            }});
           });
       }
-    });        
+    });            
   } 
 
   /**
+   * setupTokenResolver keep the resolver in this._resolve
+   * @param  {function} resolve - function used to resolve the redirect location to OAuthIGService
+   */
+  setupTokenResolver (resolve) {
+    this._resolve = resolve;
+  }
+
+  /**
    * requestFunc sends actual GET request to oauth authorization endpoint.
-   *             note that ChromeOAuthIGUser have to intercept the redirect 
-   *             and resolve redirect uri containing access token back to OAuthIGService
+   *             uses chrome.identity.launchWebAuthFlow without interaction.
    * @param  {string} authUri authorization server uri passed from OAuthIGSerivce 
    */
   requestFunc (authUri) {
-    axios.get(authUri).catch((err) => {
-      this.logger("expected error: ", err);
-    }); // this will be redirected
+    var self = this;
+    chrome.identity.launchWebAuthFlow({
+      url: authUri,
+      interactive: true
+    }, self.resolve.bind(self) );
   }
+
+  /**
+   * resolve resolves redirect uri which contains access token to OAuthIGService
+   * @param  {string} respUri redirect uri containing access token
+   */
+  resolve (respUri) {
+    this._resolve(respUri);
+  }
+
 }
 
 const oAuthCfg = {
@@ -170,7 +173,9 @@ const oAuthCfg = {
 
 const oAuthIGUser = new ChromeOAuthIGUser();
 const oAuthIGSvc = new OAuthIGService(getChromeStorage, setChromeStorage,
-                  oAuthIGUser.setupTokenResolver, oAuthIGUser.requestFunc, oAuthCfg);
+                  oAuthIGUser.setupTokenResolver.bind(oAuthIGUser), 
+                  oAuthIGUser.requestFunc.bind(oAuthIGUser), 
+                  oAuthCfg);
 
 
 

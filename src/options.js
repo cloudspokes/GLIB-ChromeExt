@@ -211,7 +211,7 @@ $(document).ready(function () {
     if (result[TOKEN_KEY_TOPCODER] == undefined) {
       $(".delete[type='topcoder']").prop('disabled', true);
     } else {
-      $('#topCoderToken').val(result[TOKEN_KEY_TOPCODER]);
+      $('#topCoderToken').val(JSON.stringify(result[TOKEN_KEY_TOPCODER]));
     }
   });
 

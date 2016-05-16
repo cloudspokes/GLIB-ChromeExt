@@ -35,16 +35,13 @@ var DOMAIN_KEY_GITLAB = 'glib::gitlab_domain';
 var DOMAIN_KEY_JIRA = 'glib::jira_domain';
 
 var TC_OAUTH_URL_KEY = "glib::tc_oauth_url";
-var TC_OAUTH_EXPIRE_KEY = "glib::tc_oauth_expire";
 var TC_OAUTH_TOKEN_KEY = "glib::tc_oauth_token";
 var TC_OAUTH_CLIENT_ID_KEY = "glib::tc_oauth_client_id";
 var TC_OAUTH_REDIRECT_URI_KEY = "glib::tc_oauth_redirect_uri";
 
 var DEFAULT_TC_OAUTH_CLIENT_ID = "99831715-8dff-4473-a794-dfc8e9755ce1";
 var DEFAULT_TC_OAUTH_REDIRECT_URI = "https://kbdpmophclfhglceikdgbcoambjjgkgb.chromiumapp.org/oauth2";
-// var DEFAULT_TC_OAUTH_URL = "https://private-6f5541-tcgliboauth.apiary-mock.com/authorize";
-
-var DEFAULT_TC_OAUTH_URL = "https://192.168.0.103:30001/authorize";
+var DEFAULT_TC_OAUTH_URL = "https://accounts.topcoder-dev.com/oauth";
 
 var ENVIRONMENT = 'glib::environment';
 

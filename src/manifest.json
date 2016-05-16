@@ -21,6 +21,7 @@
       "scripts": [
         "lib/jquery.js",
         "lib/axios.js",
+        "lib/jwt-decode.js",
         "config.js",
         "OAuthIGSvc.js",
         "background.js"
