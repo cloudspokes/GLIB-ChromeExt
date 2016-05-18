@@ -20,7 +20,6 @@ OAuth.initialize(OAUTH_API_KEY);
 
 // current view information
 // parsed from URL
-var vendor;
 var isDevEnvironment = false;
 
 function setChromeStorage(key, val) {
@@ -64,114 +63,68 @@ function getVendor(Costructor, key, defaultDomain) {
   });
 }
 
-/**
- * Set the vendor variable.
- * @returns {Promise}
- */
-function setVendor() {
-  const promises = [
-    getVendor(GithubVendor, DOMAIN_KEY_GITHUB, DEFAULT_GITHUB_DOMAIN),
-    getVendor(GitlabVendor, DOMAIN_KEY_GITLAB, DEFAULT_GITLAB_DOMAIN),
-    getVendor(JiraVendor, DOMAIN_KEY_JIRA, DEFAULT_JIRA_DOMAIN)
-  ];
-  return Promise.all(promises).then((results) => {
-    results.forEach((result) => {
-      if (result) {
-        vendor = result;
-      }
+
+function injectButton(vendor) {
+  if (vendor) {
+    // thkang91: removed setInterval
+
+    if (document.getElementById('LAUNCH_ON_TC') || document.getElementById('LAUNCH_MULTIPLE_ON_TC')) {
+      // button already exists
+      return;
+    }
+
+    if (!vendor.isEnabled()) {
+      return;
+    }
+
+    var btn = document.createElement('button');
+    btn.className = 'btn btn-sm btn-default btn-topcoder';
+    btn.innerHTML = 'Topcoder';
+    btn.setAttribute('id', 'LAUNCH_ON_TC');
+    btn.addEventListener('click', function () {
+      btn.setAttribute('disabled', 'disabled');
+      btn.innerText = 'Processing...';
+      launchOnTC(function () {
+        btn.removeAttribute('disabled');
+        btn.innerText = 'Topcoder';
+      }, vendor);
     });
-  });
-}
+    vendor.addButton(btn);
 
-/**
- * Inject html style node if not exists
- * @param  {String} url the stylesheet url
- * @param  {String} id the id of element
- */
-function injectStyleNode(url, id) {
-  if (document.getElementById(id)) {
-    return;
-  }
-  var node = document.createElement('link');
-  node.rel = 'stylesheet';
-  node.id = id;
-  node.href = chrome.extension.getURL(url);
-  document.body.appendChild(node);
-}
-
-/**
- * Try to inject topcoder buttons on issues list and issue detail page.
- * This is infinite interval, because page content can be updated dynamically
- * (when new comment is added or because of html5 navigation).
- */
-function injectStyles() {
-  injectStyleNode('styles/style.css', 'GLIB_STYLE');
-  injectStyleNode('lib/vex/vex.css', 'GLIB_STYLE_VEX');
-  injectStyleNode('lib/vex/vex-theme-os.css', 'GLIB_STYLE_VEX_THEME');
-}
-
-function injectButton() {
-  if (vendor) {
-    setInterval(function () {
-      if (document.getElementById('LAUNCH_ON_TC') || document.getElementById('LAUNCH_MULTIPLE_ON_TC')) {
-        // button already exists
-        return;
-      }
-
-      if (!vendor.isEnabled()) {
-        return;
-      }
-
-      injectStyles();
-
-      var btn = document.createElement('button');
-      btn.className = 'btn btn-sm btn-default btn-topcoder';
-      btn.innerHTML = 'Topcoder';
-      btn.setAttribute('id', 'LAUNCH_ON_TC');
-      btn.addEventListener('click', function () {
-        btn.setAttribute('disabled', 'disabled');
-        btn.innerText = 'Processing...';
-        launchOnTC(function () {
-          btn.removeAttribute('disabled');
-          btn.innerText = 'Topcoder';
-        });
-      });
-      vendor.addButton(btn);
-    }, CHECK_INTERVAL);
   }
 }
 
-function injectMultipleLaunchButton() {
+function injectMultipleLaunchButton(vendor) {
   if (vendor) {
-    setInterval(function () {
-      if (document.getElementById('LAUNCH_MULTIPLE_ON_TC') || document.getElementById('LAUNCH_ON_TC')) {
-        // button already exists
-        return;
-      }
+    // thkang91: removed setInterval
 
-      if (!vendor.isMultiEnabled()) {
-        return;
-      }
-      injectStyles();
+    if (document.getElementById('LAUNCH_MULTIPLE_ON_TC') || document.getElementById('LAUNCH_ON_TC')) {
+      // button already exists
+      return;
+    }
 
-      var div = document.createElement('div');
-      div.className = 'right';
-      var btn = document.createElement('button');
-      btn.className = 'btn btn-default btn-topcoder';
-      btn.innerHTML = 'Topcoder';
-      btn.setAttribute('id', 'LAUNCH_MULTIPLE_ON_TC');
-      btn.addEventListener('click', function () {
-        btn.setAttribute('disabled', 'disabled');
-        btn.innerText = 'Processing...';
-        launchMultipleOnTC(function () {
-          btn.removeAttribute('disabled');
-          btn.innerText = 'Topcoder';
-        });
-      });
-      div.appendChild(btn);
+    if (!vendor.isMultiEnabled()) {
+      return;
+    }
 
-      vendor.addMultiDom(div);
-    }, CHECK_INTERVAL);
+    var div = document.createElement('div');
+    div.className = 'right';
+    var btn = document.createElement('button');
+    btn.className = 'btn btn-default btn-topcoder';
+    btn.innerHTML = 'Topcoder';
+    btn.setAttribute('id', 'LAUNCH_MULTIPLE_ON_TC');
+    btn.addEventListener('click', function () {
+      btn.setAttribute('disabled', 'disabled');
+      btn.innerText = 'Processing...';
+      launchMultipleOnTC(function () {
+        btn.removeAttribute('disabled');
+        btn.innerText = 'Topcoder';
+      }, vendor);
+    });
+    div.appendChild(btn);
+
+    vendor.addMultiDom(div);
+
   }
 }
 
@@ -314,7 +267,7 @@ function getProjectId(issue, callback) {
 /**
  * Handle button click
  */
-function launchOnTC(callback) {
+function launchOnTC(callback, vendor) {
   async.waterfall([
     vendor.checkAuthentication.bind(vendor),
     checkTopCoderAuthentication,
@@ -343,7 +296,7 @@ function launchOnTC(callback) {
 /**
  * Handle multiple launch button click
  */
-function launchMultipleOnTC(callback) {
+function launchMultipleOnTC(callback, vendor) {
   async.waterfall([
     vendor.checkAuthentication.bind(vendor),
     checkTopCoderAuthentication,
@@ -363,10 +316,49 @@ function launchMultipleOnTC(callback) {
   });
 }
 
-
 setEnv();
-setVendor().then(() => {
-  // initial load
-  injectButton();
-  injectMultipleLaunchButton();
-});
+
+chrome.runtime.onMessage.addListener(
+  /**
+   * inject event handler. called by message-passing from background.js
+   * @param  {Object} request      request from background.js which should have 'injectButton' key
+   * @param  {Object} sender
+   * @param  {Object} sendResponse
+   */
+  function (request, sender, sendResponse) {
+    if (request.injectButton) { // injectButton fired from background.js
+
+      // current code needs global `vendor` variable setup.
+      // vendor is detected by url from background.js
+      // prepare needed variables for initializing a vendor object
+      var vendorClass, key, domain;
+
+      if (request.vendorClass === 'GithubVendor') {
+        // console.log(["detected github"])
+        vendorClass = GithubVendor;
+        key = DOMAIN_KEY_GITHUB;
+        domain = DEFAULT_GITHUB_DOMAIN;
+
+      } else if (request.vendorClass === 'GitlabVendor') {
+        // console.log(["detected gitlab"])
+        vendorClass = GitlabVendor;
+        key = DOMAIN_KEY_GITLAB;
+        domain = DEFAULT_GITLAB_DOMAIN;
+
+      } else if (request.vendorClass === 'JiraVendor') {
+        // console.log(["detected jira"])
+        vendorClass = JiraVendor;
+        key = DOMAIN_KEY_JIRA;
+        domain = DEFAULT_JIRA_DOMAIN;
+
+      }
+      if (vendorClass) {
+        getVendor(vendorClass, key, domain).then((result) => {
+          if (result) {
+            injectButton(result);
+            injectMultipleLaunchButton(result);
+          }
+        });
+      }
+    }
+  });
