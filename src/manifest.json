@@ -8,7 +8,12 @@
         "https://glib-mock.herokuapp.com/*",
         "https://glib-prod.herokuapp.com/*",
         "storage",
-        "identity"
+        "identity",
+        "tabs",
+        "http://*/",
+        "https://*/",
+        "webNavigation",
+        "webRequest"
     ],
     "externally_connectable": {
         "matches": ["https://oauth.io/*"]
