@@ -135,12 +135,10 @@ function injectButton() {
       btn.addEventListener('click', function () {
         btn.setAttribute('disabled', 'disabled');
         btn.innerText = 'Processing...';
-
         launchOnTC(function () {
           btn.removeAttribute('disabled');
           btn.innerText = 'Topcoder';
         });
-
       });
       vendor.addButton(btn);
     }, CHECK_INTERVAL);
@@ -148,8 +146,8 @@ function injectButton() {
 }
 
 /**
- * callSvcForToken function to demonstarge implicit grant for Topcoder Challenge
- * @param  {Function} cb callback to execute after token retrieval, called with error object if auth fails
+ * checkTopCoderAuthentication calls background.js to setup OAuth token
+ * @param  {Function} cb callback to execute after token retrieval, called with an error object if auth fails
  */
 function checkTopCoderAuthentication(cb) {
   chrome.runtime.sendMessage({oAuthIG: true}, function (result) {
@@ -202,35 +200,6 @@ function injectMultipleLaunchButton() {
 function noCacheSuffix() {
   return '?_t=' + (new Date().getTime());
 }
-
-/**
- * Prompt user for topcoder credentials
- * @param callback the callback function
- */
-function promptTopCoder(callback) {
-  vex.dialog.open({
-    message: 'Enter your topcoder username and password:',
-    className: 'vex-theme-os',
-    input: '<input name=\"username\" type=\"text\" placeholder=\"Username\" required />\n<input name=\"password\" type=\"password\" placeholder=\"Password\" required />',
-    buttons: [
-      $.extend({}, vex.dialog.buttons.YES, {
-        text: 'Login'
-      }),
-      $.extend({}, vex.dialog.buttons.NO, {
-        text: 'Cancel'
-      })
-    ],
-    callback: function (data) {
-      if (data === false) {
-        callback(new Error('topcoder login window closed'));
-        return;
-      }
-      callback(null, data.username, data.password);
-      return;
-    }
-  });
-}
-
 
 /**
  * Retrieves project id related to the issue repository.
