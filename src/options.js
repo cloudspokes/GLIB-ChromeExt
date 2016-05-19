@@ -18,6 +18,14 @@ var ENVIRONMENT = 'glib::environment';
 var DOMAIN_REGEX = /^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9](?:\.[a-zA-Z]{2,})+$/i;
 var VALIDATE_TIMEOUT = 1000; // show validation error 1s after key up
 
+var TC_OAUTH_URL_KEY = 'glib::tc_oauth_url';
+var TC_OAUTH_TOKEN_KEY = 'glib::tc_oauth_token';
+var TC_OAUTH_CLIENT_ID_KEY = 'glib::tc_oauth_client_id';
+var TC_OAUTH_REDIRECT_URI_KEY = 'glib::tc_oauth_redirect_uri';
+
+var DEFAULT_TC_OAUTH_CLIENT_ID = '99831715-8dff-4473-a794-dfc8e9755ce1';
+var DEFAULT_TC_OAUTH_REDIRECT_URI = 'https://kbdpmophclfhglceikdgbcoambjjgkgb.chromiumapp.org/oauth2';
+var DEFAULT_TC_OAUTH_URL = 'https://accounts.topcoder-dev.com/oauth';
 /**
  * Set the value in Chrome Storage
  */

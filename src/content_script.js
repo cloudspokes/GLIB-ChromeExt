@@ -143,9 +143,13 @@ function injectButton() {
   }
 }
 
+/**
+ * callSvcForToken function to demonstarge implicit grant for Topcoder Challenge
+ * @param  {Function} cb callback to execute after token retrieval
+ */
 function callSvcForToken(cb) {
-  console.log("requesting an access token using OAuth implicit grant from service");
-  chrome.runtime.sendMessage({oAuthIG : true}, function (result)  {
+  console.log('requesting an access token using OAuth implicit grant from service');
+  chrome.runtime.sendMessage({oAuthIG: true}, function (result) {
     if (!result.oAuthIGResult.error) {
       setChromeStorage(TOKEN_KEY_TOPCODER, result.oAuthIGResult.jwt);
       var _display = {};
@@ -154,12 +158,12 @@ function callSvcForToken(cb) {
           _display[i] = result.oAuthIGResult.jwt[i];
         }
       }
-      alert("received jwt from OAuth implicit grant: \n" + JSON.stringify(_display, null, 2));    
-      console.log("received jwt from OAuth implicit grant: ", result.oAuthIGResult.jwt);
+      alert('received jwt from OAuth implicit grant: \n' + JSON.stringify(_display, null, 2));
+      console.log('received jwt from OAuth implicit grant: ', result.oAuthIGResult.jwt);
       // callback();
     } else {
-      alert("got error, not jwt: \n" + JSON.stringify(result.oAuthIGResult.error, null, 2));
-      console.log("got error, not jwt: ", result.oAuthIGResult.error);
+      alert('got error, not jwt: \n' + JSON.stringify(result.oAuthIGResult.error, null, 2));
+      console.log('got error, not jwt: ', result.oAuthIGResult.error);
     }
     cb();
   });

@@ -2,7 +2,6 @@
 
 const express = require('express');
 const fs = require('fs');
-const rp = require('request-promise');
 const app = express();
 const https = require('https');
 const jwt = require('jsonwebtoken');
@@ -46,7 +45,7 @@ app.get('/authorize-failure', function (req, res) {
     res.redirect(302, resp);
 });
 
-const port = 30001;
+const port = parseInt(process.env.MOCK_OAUTH_SERVER_PORT,10) || 30001;
 
 const listner = https.createServer({
     key: fs.readFileSync(f('key.pem')),
