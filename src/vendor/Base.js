@@ -148,10 +148,10 @@ class BaseVendor {
    * @param callback the callback function
    */
   postIssue(issue, callback) {
-    chrome.storage.local.get(TOKEN_KEY_TOPCODER, (result) => {
+    chrome.storage.local.get(TC_OAUTH_TOKEN_KEY, (result) => {
       axios.post(getTCEndpoint() + 'challenges', issue, {
         headers: {
-          'x-auth-access-token': result[TOKEN_KEY_TOPCODER]
+          'Authorization': result[TC_OAUTH_TOKEN_KEY].bearer
         }
       }).then((response) => {
         var data = response.data;
@@ -173,7 +173,8 @@ class BaseVendor {
         console.error(response);
         if (response.status === 401) {
           // token expired or revoked
-          removeChromeStorage(TOKEN_KEY_TOPCODER);
+          removeChromeStorage(TC_OAUTH_TOKEN_KEY);
+          removeChromeStorage(TC_OAUTH_TOKEN_KEY);
           checkTopCoderAuthentication(() => {
             this.postIssue(issue, callback);
           });

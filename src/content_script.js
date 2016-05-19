@@ -13,7 +13,6 @@
  */
 
 var CHECK_INTERVAL = 50;
-var TOKEN_KEY_TOPCODER = 'glib::topcoder_token';
 var ENVIRONMENT = 'glib::environment';
 
 OAuth.initialize(OAUTH_API_KEY);
@@ -23,6 +22,11 @@ OAuth.initialize(OAUTH_API_KEY);
 var vendor;
 var isDevEnvironment = false;
 
+/**
+ * setChromeStorage  set value in chrome storage
+ * @param {string} key   key to set in chrmoe stoarge
+ * @param {object} value value to set
+ */
 function setChromeStorage(key, val) {
   var obj = {};
   obj[key] = val;
@@ -132,7 +136,7 @@ function injectButton() {
         btn.setAttribute('disabled', 'disabled');
         btn.innerText = 'Processing...';
 
-        callSvcForToken(function () {
+        launchOnTC(function () {
           btn.removeAttribute('disabled');
           btn.innerText = 'Topcoder';
         });
@@ -145,27 +149,15 @@ function injectButton() {
 
 /**
  * callSvcForToken function to demonstarge implicit grant for Topcoder Challenge
- * @param  {Function} cb callback to execute after token retrieval
+ * @param  {Function} cb callback to execute after token retrieval, called with error object if auth fails
  */
-function callSvcForToken(cb) {
-  console.log('requesting an access token using OAuth implicit grant from service');
+function checkTopCoderAuthentication(cb) {
   chrome.runtime.sendMessage({oAuthIG: true}, function (result) {
     if (!result.oAuthIGResult.error) {
-      setChromeStorage(TOKEN_KEY_TOPCODER, result.oAuthIGResult.jwt);
-      var _display = {};
-      for (var i in result.oAuthIGResult.jwt) {
-        if (result.oAuthIGResult.jwt.hasOwnProperty(i) && i !== 'bearer') {
-          _display[i] = result.oAuthIGResult.jwt[i];
-        }
-      }
-      alert('received jwt from OAuth implicit grant: \n' + JSON.stringify(_display, null, 2));
-      console.log('received jwt from OAuth implicit grant: ', result.oAuthIGResult.jwt);
-      // callback();
+      cb();
     } else {
-      alert('got error, not jwt: \n' + JSON.stringify(result.oAuthIGResult.error, null, 2));
-      console.log('got error, not jwt: ', result.oAuthIGResult.error);
+      cb({error: true, message: 'failed to authenticate to Topcoder'});
     }
-    cb();
   });
 }
 
@@ -191,7 +183,7 @@ function injectMultipleLaunchButton() {
       btn.addEventListener('click', function () {
         btn.setAttribute('disabled', 'disabled');
         btn.innerText = 'Processing...';
-        callSvcForToken(function () {
+        launchMultipleOnTC(function () {
           btn.removeAttribute('disabled');
           btn.innerText = 'Topcoder';
         });

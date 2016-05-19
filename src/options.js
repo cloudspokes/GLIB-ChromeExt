@@ -12,20 +12,19 @@
 
 var TOKEN_KEY_GITHUB = 'glib::github_token';
 var TOKEN_KEY_GITLAB = 'glib::gitlab_token';
-var TOKEN_KEY_TOPCODER = 'glib::topcoder_token';
 var ADD_MASS_DELIMETER = '###';
 var ENVIRONMENT = 'glib::environment';
 var DOMAIN_REGEX = /^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9](?:\.[a-zA-Z]{2,})+$/i;
 var VALIDATE_TIMEOUT = 1000; // show validation error 1s after key up
 
-var TC_OAUTH_URL_KEY = 'glib::tc_oauth_url';
-var TC_OAUTH_TOKEN_KEY = 'glib::tc_oauth_token';
-var TC_OAUTH_CLIENT_ID_KEY = 'glib::tc_oauth_client_id';
-var TC_OAUTH_REDIRECT_URI_KEY = 'glib::tc_oauth_redirect_uri';
+// var TC_OAUTH_URL_KEY = 'glib::tc_oauth_url';
+// var TC_OAUTH_TOKEN_KEY = 'glib::tc_oauth_token';
+// var TC_OAUTH_CLIENT_ID_KEY = 'glib::tc_oauth_client_id';
+// var TC_OAUTH_REDIRECT_URI_KEY = 'glib::tc_oauth_redirect_uri';
 
-var DEFAULT_TC_OAUTH_CLIENT_ID = '99831715-8dff-4473-a794-dfc8e9755ce1';
-var DEFAULT_TC_OAUTH_REDIRECT_URI = 'https://kbdpmophclfhglceikdgbcoambjjgkgb.chromiumapp.org/oauth2';
-var DEFAULT_TC_OAUTH_URL = 'https://accounts.topcoder-dev.com/oauth';
+// var DEFAULT_TC_OAUTH_CLIENT_ID = '99831715-8dff-4473-a794-dfc8e9755ce1';
+// var DEFAULT_TC_OAUTH_REDIRECT_URI = 'https://kbdpmophclfhglceikdgbcoambjjgkgb.chromiumapp.org/oauth2';
+// var DEFAULT_TC_OAUTH_URL = 'https://accounts.topcoder-dev.com/oauth';
 /**
  * Set the value in Chrome Storage
  */
@@ -118,82 +117,10 @@ function _initDomainField(selector, key, defaultDomain) {
   });
 }
 
-function _initOAuthIGField(selector, key, defaultValue) {
-  const $input = $(selector);
-  const $reset = $input.next('.reset');
-  const $error = $('<div class="error">Invalid</div>');
-  $input.parent().append($error);
-  $error.hide();
-  let timeoutId;
-  $input.attr('placeholder', defaultValue);
-
-  // show/hide error state
-  const toggleError = (isValid) => {
-    if (isValid) {
-      $input.removeClass('is-error');
-      $error.hide();
-    } else {
-      $input.addClass('is-error');
-      $error.show();
-    }
-  };
-
-  // load value from local storage
-  chrome.storage.local.get(key, function (result) {
-    const value = result[key];
-    if (value) {
-      $input.val(value);
-    } else {
-      $reset.prop('disabled', true);
-    }
-  });
-
-  // handle input change
-  // save and validate
-  $input.keyup(() => {
-    const value = $input.val();
-    let isValid = true;
-    if (value && value.trim().length) {
-      // isValid = DOMAIN_REGEX.test(value);
-      isValid = true;
-      if (isValid) {
-        setChromeStorage(key, value);
-      }
-      $reset.prop('disabled', false);
-    } else {
-      removeChromeStorage(key);
-      $reset.prop('disabled', true);
-    }
-    clearTimeout(timeoutId);
-    toggleError(true);
-    timeoutId = setTimeout(() => {
-      toggleError(isValid);
-    }, VALIDATE_TIMEOUT);
-  });
-
-  // reset value
-  $reset.click(() => {
-    vex.dialog.confirm({
-      message: 'Are you sure to reset?',
-      callback: function (value) {
-        if (!value) {
-          return;
-        }
-        removeChromeStorage(key);
-        $reset.prop('disabled', true);
-        toggleError(true);
-        $input.val('');
-      }
-    });
-  });
-}
 $(document).ready(function () {
   _initDomainField('#githubDomain', DOMAIN_KEY_GITHUB, DEFAULT_GITHUB_DOMAIN);
   _initDomainField('#gitlabDomain', DOMAIN_KEY_GITLAB, DEFAULT_GITLAB_DOMAIN);
   _initDomainField('#jiraDomain', DOMAIN_KEY_JIRA, DEFAULT_JIRA_DOMAIN);
-  _initOAuthIGField('#TCOAuthClientId', TC_OAUTH_CLIENT_ID_KEY, DEFAULT_TC_OAUTH_CLIENT_ID);
-  _initOAuthIGField('#TCOAuthRedirectUri', TC_OAUTH_REDIRECT_URI_KEY, DEFAULT_TC_OAUTH_REDIRECT_URI);
-  _initOAuthIGField('#TCOAuthServerUri', TC_OAUTH_URL_KEY, DEFAULT_TC_OAUTH_URL);
 
     /* initialization for vex library */
   vex.defaultOptions.className = 'vex-theme-os';
@@ -215,11 +142,11 @@ $(document).ready(function () {
       $('#gitlabToken').val(result[TOKEN_KEY_GITLAB]);
     }
   });
-  chrome.storage.local.get(TOKEN_KEY_TOPCODER, function (result) {
-    if (result[TOKEN_KEY_TOPCODER] == undefined) {
+  chrome.storage.local.get(TC_OAUTH_TOKEN_KEY, function (result) {
+    if (result[TC_OAUTH_TOKEN_KEY] == undefined) {
       $(".delete[type='topcoder']").prop('disabled', true);
     } else {
-      $('#topCoderToken').val(JSON.stringify(result[TOKEN_KEY_TOPCODER]));
+      $('#topCoderToken').val(JSON.stringify(result[TC_OAUTH_TOKEN_KEY]));
     }
   });
 
@@ -254,7 +181,6 @@ $(document).ready(function () {
             $('#gitlabToken').val('');
           } else {
             $(".delete[type='topcoder']").prop('disabled', true);
-            removeChromeStorage(TOKEN_KEY_TOPCODER);
             removeChromeStorage(TC_OAUTH_TOKEN_KEY);
             $('#topCoderToken').val('');
           }

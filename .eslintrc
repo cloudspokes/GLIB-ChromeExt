@@ -9,7 +9,8 @@
     "one-var": 0,
     "no-unused-vars": 0,
     "eqeqeq": 0,
-    "padded-blocks": 0
+    "padded-blocks": 0,
+    "no-useless-escape": 0
   },
   "env": {
     "browser": true,
@@ -42,6 +43,16 @@
     "DEFAULT_JIRA_DOMAIN": true,
     "DOMAIN_KEY_GITHUB": true,
     "DOMAIN_KEY_GITLAB": true,
-    "DOMAIN_KEY_JIRA": true
+    "DOMAIN_KEY_JIRA": true,
+    "OAuthIGService": true,
+    "TC_OAUTH_TOKEN_KEY": true,
+    "jwt_decode": true,
+    "ENVIRONMENT": true,
+    "TC_OAUTH_URL_KEY": true,
+    "TC_OAUTH_REDIRECT_URI_KEY": true,
+    "TC_OAUTH_CLIENT_ID_KEY": true,
+    "DEFAULT_TC_OAUTH_URL": true,
+    "DEFAULT_TC_OAUTH_REDIRECT_URI": true,
+    "DEFAULT_TC_OAUTH_CLIENT_ID": true
   }
 }

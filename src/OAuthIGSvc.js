@@ -62,12 +62,12 @@ class OAuthIGService {
       var argz = Array.prototype.slice.call(arguments);
       self.getStorage(config.ENVIRONMENT, false)
         .then((isDev) => {
-          console.log.apply(console, argz);
-
+          if (isDev) {
+            console.debug.apply(console, argz);
+          }
         });
     };
 
-    this.logger('init oauthigservice');
   }
 
   /**
@@ -80,26 +80,26 @@ class OAuthIGService {
     this.logger('getting token');
     var self = this;
     return new Promise((resolve, reject) => {
-      const cfg = this.config;
-      const log = this.logger;
+      const cfg = self.config;
+      const log = self.logger;
       // check if storage token exists
-      this.getStorage(cfg.TC_OAUTH_TOKEN_KEY, null)
+      self.getStorage(cfg.TC_OAUTH_TOKEN_KEY, null)
         .then((result) => {
           log('lookup TC Token in storage');
           if (result) {
             log('found TC token in storage', result);
             // renew token if required.
-            this.renew(result).then((result) => {
-              this.setStorage(cfg.TC_OAUTH_TOKEN_KEY, result);
+            self.renew(result).then((result) => {
+              self.setStorage(cfg.TC_OAUTH_TOKEN_KEY, result);
               resolve(result);
             }).catch(reject);
 
           } else {
             log('no TC token in storage');
             // token does not exist, initiate authorize routine
-            this.authorize().then((result) => {
+            self.authorize().then((result) => {
               log('got TC token from redirect', result);
-              this.setStorage(cfg.TC_OAUTH_TOKEN_KEY, result);
+              self.setStorage(cfg.TC_OAUTH_TOKEN_KEY, result);
               resolve(result);
             }).catch(reject);
 
@@ -136,14 +136,14 @@ class OAuthIGService {
         }
       };
 
-      const cfg = this.config;
-      const log = this.logger;
-      this.setupTokenResolver(resolver);
+      const cfg = self.config;
+      const log = self.logger;
+      self.setupTokenResolver(resolver);
 
       const getParams = [
-        this.getStorage(cfg.TC_OAUTH_URL_KEY, cfg.DEFAULT_TC_OAUTH_URL),
-        this.getStorage(cfg.TC_OAUTH_CLIENT_ID_KEY, cfg.DEFAULT_TC_OAUTH_CLIENT_ID),
-        this.getStorage(cfg.TC_OAUTH_REDIRECT_URI_KEY, cfg.DEFAULT_TC_OAUTH_REDIRECT_URI)
+        self.getStorage(cfg.TC_OAUTH_URL_KEY, cfg.DEFAULT_TC_OAUTH_URL),
+        self.getStorage(cfg.TC_OAUTH_CLIENT_ID_KEY, cfg.DEFAULT_TC_OAUTH_CLIENT_ID),
+        self.getStorage(cfg.TC_OAUTH_REDIRECT_URI_KEY, cfg.DEFAULT_TC_OAUTH_REDIRECT_URI)
       ];
 
       Promise.all(getParams).then((params) => {
@@ -152,7 +152,7 @@ class OAuthIGService {
                         encodeURIComponent(params[2]);
         log('requesting TC Token', authUri);
 
-        this.requestFunc(authUri);
+        self.requestFunc(authUri);
       });
     });
   }
@@ -163,7 +163,8 @@ class OAuthIGService {
    * @return {Promise<token>} - resolved reusing current token or requesting new token by authorize()
    */
   renew(token) {
-    const log = this.logger;
+    var self = this;
+    const log = self.logger;
     return new Promise((resolve, reject) => {
       let now = Math.floor(new Date().getTime() / 1000);
 
@@ -173,7 +174,7 @@ class OAuthIGService {
         resolve(token);
       } else {
         log('renewal of current jwt needed');
-        this.authorize().then((result) => {
+        self.authorize().then((result) => {
           resolve(result);
         }).catch(reject);
       }
@@ -205,8 +206,6 @@ function extractParamsFromURIFragment(q) {
 
 if (typeof module !== 'undefined') {
   module.exports.OAuthIGService = OAuthIGService;
-  module.exports.extractParamsFromURIFragment = extractParamsFromURIFragment;
 } else {
   window.OAuthIGService = OAuthIGService;
-  window.extractParamsFromURIFragment = extractParamsFromURIFragment;
 }

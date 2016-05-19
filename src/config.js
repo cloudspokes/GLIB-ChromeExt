@@ -45,15 +45,3 @@ var DEFAULT_TC_OAUTH_URL = 'https://accounts.topcoder-dev.com/oauth';
 
 var ENVIRONMENT = 'glib::environment';
 
-if (typeof module !== 'undefined') {
-  module.exports = {
-    TC_OAUTH_TOKEN_KEY,
-    TC_OAUTH_URL_KEY,
-    TC_OAUTH_REDIRECT_URI_KEY,
-    TC_OAUTH_CLIENT_ID_KEY,
-    DEFAULT_TC_OAUTH_URL,
-    DEFAULT_TC_OAUTH_REDIRECT_URI,
-    DEFAULT_TC_OAUTH_CLIENT_ID,
-    ENVIRONMENT
-  };
-}
