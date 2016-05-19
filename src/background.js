@@ -115,7 +115,7 @@ class ChromeOAuthIGUser {
     this.logger = logger || function (...argz) {
       getChromeStorage(ENVIRONMENT, false)
         .then((isDev) => {
-          isDev && console.log.apply(console, argz);
+          isDev && console.debug.apply(console, argz);
         });
     };
 
@@ -150,7 +150,7 @@ class ChromeOAuthIGUser {
 
   /**
    * requestFunc sends actual GET request to oauth authorization endpoint.
-   *             uses chrome.identity.launchWebAuthFlow without interaction.
+   *             uses chrome.identity.launchWebAuthFlow with interaction if needed.
    * @param  {string} authUri authorization server uri passed from OAuthIGSerivce
    */
   requestFunc(authUri) {
