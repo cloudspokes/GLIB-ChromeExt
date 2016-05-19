@@ -9,8 +9,6 @@
         "https://glib-prod.herokuapp.com/*",
         "storage",
         "identity",
-        "webRequest",
-        "webRequestBlocking",
         "http://*/*",
         "https://*/*"
     ],
