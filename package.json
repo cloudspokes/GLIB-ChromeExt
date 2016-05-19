@@ -33,7 +33,8 @@
     "test": "mocha",
     "lint": "eslint src || true",
     "lint:fix": "eslint src --fix || true",
-    "build": "gulp"
+    "build": "gulp",
+    "mock-oauth": "node mock-oauth-server/server.js"
   },
   "repository": {
     "type": "git",

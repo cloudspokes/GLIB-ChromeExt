@@ -27,7 +27,6 @@ app.get('/authorize-success', function (req, res) {
         `&token_type=bearer`,
         `&state=${req.query.state || ''}`
     ].join('');
-    // const hash = "#access_token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJyb2xlcyI6W10sImlzcyI6Imh0dHBzOi8vYXBpLnRvcGNvZGVyLWRldi5jb20iLCJoYW5kbGUiOiJtZXNzIiwiZXhwIjoxNDYyODQ3MzI3LCJ1c2VySWQiOiIzMDUzODQiLCJpYXQiOjE0NjI4NDY3MjcsImVtYWlsIjoibWVzc0BhcHBpcmlvLmNvbSIsImp0aSI6IjdiOGZmM2M2LTU0ZWYtNDk2Yi05YTJkLTRiOTM3ZmQwMmU4NSJ9.zIc-VM0aJ_kirPTW3Z8p_RPpP2ITwOegqlwzR6HXieg&token_type=bearer";    
     const resp = redirect_uri + hash
     console.log('success redirect to:', resp);
     res.redirect(302, resp);
