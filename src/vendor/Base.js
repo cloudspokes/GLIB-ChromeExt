@@ -174,7 +174,6 @@ class BaseVendor {
         if (response.status === 401) {
           // token expired or revoked
           removeChromeStorage(TC_OAUTH_TOKEN_KEY);
-          removeChromeStorage(TC_OAUTH_TOKEN_KEY);
           checkTopCoderAuthentication(() => {
             this.postIssue(issue, callback);
           });
