@@ -10,7 +10,12 @@
     "node": "4.2.x",
     "npm": "~2.14.12"
   },
-  "dependencies": {},
+  "dependencies": {
+    "express": "^4.13.4",
+    "jsonwebtoken": "^6.2.0",
+    "jwt-decode": "^2.0.1",
+    "request-promise": "^3.0.0"
+  },
   "devDependencies": {
     "eslint": "^2.2.0",
     "eslint-config-standard": "^5.1.0",
@@ -28,7 +33,8 @@
     "test": "mocha",
     "lint": "eslint src || true",
     "lint:fix": "eslint src --fix || true",
-    "build": "gulp"
+    "build": "gulp",
+    "mock-oauth": "node mock-oauth-server/server.js"
   },
   "repository": {
     "type": "git",

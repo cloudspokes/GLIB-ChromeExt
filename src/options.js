@@ -12,12 +12,19 @@
 
 var TOKEN_KEY_GITHUB = 'glib::github_token';
 var TOKEN_KEY_GITLAB = 'glib::gitlab_token';
-var TOKEN_KEY_TOPCODER = 'glib::topcoder_token';
 var ADD_MASS_DELIMETER = '###';
 var ENVIRONMENT = 'glib::environment';
 var DOMAIN_REGEX = /^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9](?:\.[a-zA-Z]{2,})+$/i;
 var VALIDATE_TIMEOUT = 1000; // show validation error 1s after key up
 
+// var TC_OAUTH_URL_KEY = 'glib::tc_oauth_url';
+// var TC_OAUTH_TOKEN_KEY = 'glib::tc_oauth_token';
+// var TC_OAUTH_CLIENT_ID_KEY = 'glib::tc_oauth_client_id';
+// var TC_OAUTH_REDIRECT_URI_KEY = 'glib::tc_oauth_redirect_uri';
+
+// var DEFAULT_TC_OAUTH_CLIENT_ID = '99831715-8dff-4473-a794-dfc8e9755ce1';
+// var DEFAULT_TC_OAUTH_REDIRECT_URI = 'https://kbdpmophclfhglceikdgbcoambjjgkgb.chromiumapp.org/oauth2';
+// var DEFAULT_TC_OAUTH_URL = 'https://accounts.topcoder-dev.com/oauth';
 /**
  * Set the value in Chrome Storage
  */
@@ -135,11 +142,11 @@ $(document).ready(function () {
       $('#gitlabToken').val(result[TOKEN_KEY_GITLAB]);
     }
   });
-  chrome.storage.local.get(TOKEN_KEY_TOPCODER, function (result) {
-    if (result[TOKEN_KEY_TOPCODER] == undefined) {
+  chrome.storage.local.get(TC_OAUTH_TOKEN_KEY, function (result) {
+    if (result[TC_OAUTH_TOKEN_KEY] == undefined) {
       $(".delete[type='topcoder']").prop('disabled', true);
     } else {
-      $('#topCoderToken').val(result[TOKEN_KEY_TOPCODER]);
+      $('#topCoderToken').val(JSON.stringify(result[TC_OAUTH_TOKEN_KEY]));
     }
   });
 
@@ -174,7 +181,7 @@ $(document).ready(function () {
             $('#gitlabToken').val('');
           } else {
             $(".delete[type='topcoder']").prop('disabled', true);
-            removeChromeStorage(TOKEN_KEY_TOPCODER);
+            removeChromeStorage(TC_OAUTH_TOKEN_KEY);
             $('#topCoderToken').val('');
           }
         }

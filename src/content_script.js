@@ -13,7 +13,6 @@
  */
 
 var CHECK_INTERVAL = 50;
-var TOKEN_KEY_TOPCODER = 'glib::topcoder_token';
 var ENVIRONMENT = 'glib::environment';
 
 OAuth.initialize(OAUTH_API_KEY);
@@ -23,6 +22,11 @@ OAuth.initialize(OAUTH_API_KEY);
 var vendor;
 var isDevEnvironment = false;
 
+/**
+ * setChromeStorage  set value in chrome storage
+ * @param {string} key   key to set in chrmoe stoarge
+ * @param {object} value value to set
+ */
 function setChromeStorage(key, val) {
   var obj = {};
   obj[key] = val;
@@ -141,6 +145,20 @@ function injectButton() {
   }
 }
 
+/**
+ * checkTopCoderAuthentication calls background.js to setup OAuth token
+ * @param  {Function} cb callback to execute after token retrieval, called with an error object if auth fails
+ */
+function checkTopCoderAuthentication(cb) {
+  chrome.runtime.sendMessage({oAuthIG: true}, function (result) {
+    if (!result.oAuthIGResult.error) {
+      cb();
+    } else {
+      cb({error: true, message: 'failed to authenticate to Topcoder'});
+    }
+  });
+}
+
 function injectMultipleLaunchButton() {
   if (vendor) {
     setInterval(function () {
@@ -181,74 +199,6 @@ function injectMultipleLaunchButton() {
  */
 function noCacheSuffix() {
   return '?_t=' + (new Date().getTime());
-}
-
-/**
- * Prompt user for topcoder credentials
- * @param callback the callback function
- */
-function promptTopCoder(callback) {
-  vex.dialog.open({
-    message: 'Enter your topcoder username and password:',
-    className: 'vex-theme-os',
-    input: '<input name=\"username\" type=\"text\" placeholder=\"Username\" required />\n<input name=\"password\" type=\"password\" placeholder=\"Password\" required />',
-    buttons: [
-      $.extend({}, vex.dialog.buttons.YES, {
-        text: 'Login'
-      }),
-      $.extend({}, vex.dialog.buttons.NO, {
-        text: 'Cancel'
-      })
-    ],
-    callback: function (data) {
-      if (data === false) {
-        callback(new Error('topcoder login window closed'));
-        return;
-      }
-      callback(null, data.username, data.password);
-      return;
-    }
-  });
-}
-/**
- * Authenticate with topcoder
- * @param callback the callback function
- */
-function authenticateTopCoder(username, password, callback) {
-  axios.post(getTCEndpoint() + 'oauth/access_token', {
-    'x_auth_username': username,
-    'x_auth_password': password
-  }).then(function (result) {
-    if (result.data.errorMessage) {
-      callback({
-        message: result.data.errorMessage
-      });
-    } else {
-      setChromeStorage(TOKEN_KEY_TOPCODER, result.data.x_auth_access_token);
-      callback();
-    }
-  }, function (err) {
-    callback(err);
-  });
-}
-
-/**
- * Ensure user is authenticated to topcoder
- * @param callback the callback function
- */
-function checkTopCoderAuthentication(callback) {
-  chrome.storage.local.get(TOKEN_KEY_TOPCODER, function (result) {
-    if (!result[TOKEN_KEY_TOPCODER]) {
-      async.waterfall([
-        promptTopCoder,
-        authenticateTopCoder
-      ], function (err) {
-        callback(err);
-      });
-    } else {
-      callback();
-    }
-  });
 }
 
 /**
