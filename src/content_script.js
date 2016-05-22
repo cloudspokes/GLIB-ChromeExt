@@ -22,6 +22,11 @@ OAuth.initialize(OAUTH_API_KEY);
 // parsed from URL
 var isDevEnvironment = false;
 
+/**
+ * setChromeStorage  set value in chrome storage
+ * @param {string} key   key to set in chrmoe stoarge
+ * @param {object} value value to set
+ */
 function setChromeStorage(key, val) {
   var obj = {};
   obj[key] = val;
@@ -92,6 +97,20 @@ function injectButton(vendor) {
     vendor.addButton(btn);
 
   }
+}
+
+/**
+ * checkTopCoderAuthentication calls background.js to setup OAuth token
+ * @param  {Function} cb callback to execute after token retrieval, called with an error object if auth fails
+ */
+function checkTopCoderAuthentication(cb) {
+  chrome.runtime.sendMessage({oAuthIG: true}, function (result) {
+    if (!result.oAuthIGResult.error) {
+      cb();
+    } else {
+      cb({error: true, message: 'failed to authenticate to Topcoder'});
+    }
+  });
 }
 
 function injectMultipleLaunchButton(vendor) {
