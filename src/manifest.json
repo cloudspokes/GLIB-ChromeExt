@@ -1,7 +1,7 @@
 {
     "name": "GLIB-ChromeExt",
     "key": "glib",
-    "version": "1.0",
+    "version": "1.5",
     "description": "GLIB-ChromeExt",
     "options_page": "options.html",
     "permissions": [
@@ -19,14 +19,14 @@
         "matches": ["https://oauth.io/*"]
     },
     "background": {
-      "scripts": [
-        "lib/jquery.js",
-        "lib/axios.js",
-        "lib/jwt-decode.js",
-        "config.js",
-        "OAuthIGSvc.js",
-        "background.js"
-      ]
+        "scripts": [
+            "lib/jquery.js",
+            "lib/axios.js",
+            "lib/jwt-decode.js",
+            "config.js",
+            "OAuthIGSvc.js",
+            "background.js"
+        ]
     },
     "content_scripts": [{
         "matches": [
