@@ -50,13 +50,13 @@ class JiraVendor extends BaseVendor {
 
     // check if comment button exists
     // if doesn't existing, the topcoder button won't work
-    return !!document.getElementById('opsbar-comment-issue_container');
+    return document.getElementsByClassName('ops-menus').length > 0;
   }
 
   /** @inheritdoc */
   addButton(btn) {
     btn.className += ' toolbar-trigger';
-    const wrapper = document.getElementById('opsbar-comment-issue_container').parentNode;
+    const wrapper = document.getElementsByClassName('ops-menus')[0].firstChild
     const ul = document.createElement('ul');
     ul.className = 'toolbar-group';
     const li = document.createElement('li');
