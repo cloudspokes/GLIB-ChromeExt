@@ -1,6 +1,5 @@
 {
     "name": "GLIB-ChromeExt",
-    "key": "glib",
     "version": "1.5",
     "description": "GLIB-ChromeExt",
     "options_page": "options.html",
