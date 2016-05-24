@@ -153,6 +153,7 @@ class OAuthIGService {
             ];
 
             Promise.all(getParams).then((params) => {
+                log('Values for call to get token', params);
                 const authUri = params[0] + '?response_type=token&' +
                     'client_id=' + params[1] + '&redirect_uri=' +
                     encodeURIComponent(params[2]);

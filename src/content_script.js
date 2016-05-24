@@ -40,6 +40,7 @@ function removeChromeStorage(key) {
 function setEnv() {
   chrome.storage.local.get(ENVIRONMENT, function (result) {
     isDevEnvironment = result[ENVIRONMENT] || false;
+    chrome.runtime.sendMessage({setEnv: true});
   });
 }
 

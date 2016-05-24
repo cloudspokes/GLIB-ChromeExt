@@ -67,16 +67,30 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       }
       sendResponse({err, result});
     });
+  } else if (request.setEnv) {
+    // This is the handler for when the content_script fires th event indicating that the 
+    // environment has changed and the locally stored value used by the auth layer should 
+    // be updated. 
+    getChromeStorage(ENVIRONMENT, false)
+      .then(function(result) {
+        var urlObj = {},
+          idObj = {};
+        // True indicates debug mode.
+        if (result) {
+          urlObj[TC_OAUTH_URL_KEY] = DEFAULT_TC_OAUTH_URL;
+          idObj[TC_OAUTH_CLIENT_ID_KEY] = DEFAULT_TC_OAUTH_CLIENT_ID;
+        } else {
+          urlObj[TC_OAUTH_URL_KEY] = PROD_TC_OAUTH_URL;
+          idObj[TC_OAUTH_CLIENT_ID_KEY] = PROD_TC_OAUTH_CLIENT_ID;
+        }
+        // Save the values in chrome storage.
+        chrome.storage.local.set(urlObj);
+        chrome.storage.local.set(idObj);
+      });
   }
   return true;
 });
 
-
-/**
- * ENVIRONMENT key to find dev/prod state from chrome extension options
- * @type {String}
- */
-var ENVIRONMENT = 'glib::environment';
 
 /**
  * log - logs only when DEV Environment, using `console.log`
@@ -249,10 +263,10 @@ bindRequest();
 function getChromeStorage(key, defaultValue) {
   return new Promise((resolve) => {
       chrome.storage.local.get(key, (obj) => {
-      const value = obj[key] || defaultValue;
-  resolve(value);
-});
-});
+        const value = obj[key] || defaultValue;
+        resolve(value);
+      });
+  });
 }
 
 /**
