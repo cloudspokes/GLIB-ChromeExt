@@ -1,7 +1,7 @@
 {
-  "name": "GLIB-ChromeExt",
-  //"key": "glib", Used for local dev
-  "version": "1.5",
+    "name": "GLIB-ChromeExt",
+    //"key": "glib", Used for local dev
+    "version": "1.5.1",
     "description": "GLIB-ChromeExt",
     "options_page": "options.html",
     "permissions": [
