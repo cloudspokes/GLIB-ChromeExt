@@ -30,3 +30,6 @@ node_modules
 
 # Debug log from npm
 npm-debug.log
+
+#OSX-specific exclusions
+.[dD][sS]_[sS]tore

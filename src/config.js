@@ -44,7 +44,7 @@ var DEFAULT_TC_OAUTH_REDIRECT_URI = `https://${EXTENSION_ID}.chromiumapp.org/oau
 var DEFAULT_TC_OAUTH_CLIENT_ID = '99831715-8dff-4473-a794-dfc8e9755ce1';
 var DEFAULT_TC_OAUTH_URL = 'https://accounts.topcoder-dev.com/oauth';
 
-var PROD_TC_OAUTH_CLIENT_ID = '99831715-8dff-4473-a794-dfc8e9755ce1';
+var PROD_TC_OAUTH_CLIENT_ID = 'ef30d1d6-bc65-4281-ba66-91b85b060df1';
 var PROD_TC_OAUTH_URL = 'https://accounts.topcoder.com/oauth';
 
 var ENVIRONMENT = 'glib::environment';
