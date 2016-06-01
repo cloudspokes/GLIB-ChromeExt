@@ -1,6 +1,6 @@
 {
     "name": "GLIB-ChromeExt",
-    "version": "1.5.2",
+    "version": "1.5.3",
     "description": "GLIB-ChromeExt",
     "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA2DZWaZN207yG4UKfCLfkHMIJDqdmux1TAvjtqAGfBTjaDlAe+wULHTE4eKRRSdRMlFoDc+Kau1yXiNTvf5C2HfiAklEmOMJ31zlRhZK/V60TqO42oEi359VvZIBniENrZg5O71Ww0XNg5qJcFAbDAQR1eYsAdAp/jhwX2XhSCfOkdGhT4gcTcxY8fwZKnV/muIyvvNkaEaN8n/w/ROFRonwefTin9B3I+0r12X+7aGp8Xn/fcfhq5GkkHsOf5R403MEW8vRbd1I4y3HjUKRZ2U5SufQN6og8xvhgZxcZdY9fGtY376tDyUnzW/UHQsFRD3S04a6DtDXNbkThWJ3+XwIDAQAB",
     "options_page": "options.html",
