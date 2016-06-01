@@ -17,8 +17,8 @@ var EXTENSION_ID = 'fbdelahfocadoeclphgckagbmjpcnpkd';
 
 var OAUTH_APPS = {
     gitlab: {
-        clientId: '2e7ddb0f2135d5f81407d49941a6cb1a83767b200a584e97f9fb92684ce71c89',
-        clientSecret: '79d574243aa4a133db7ac16b37a994c8698ee22708d24a1bf2a0a5c16486b293',
+        clientId: '1c2ed14f1473fb92ab814862af506a713682bd079a4cba969867bdc907cd387c',
+        clientSecret: '21a80f6706eed62548e5fd964bdbc0a4ce57c9749fdced19707074e40ac0df8c',
         redirectUri: `https://${EXTENSION_ID}.chromiumapp.org/oauth2`,
         scope: 'api',
         authorizeUrl: 'https://gitlab.com/oauth/authorize',
