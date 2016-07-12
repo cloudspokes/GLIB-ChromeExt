@@ -143,13 +143,21 @@ class BaseVendor {
     }
 
     /**
+     *  Get the challenges endpoint.
+     *  @returns {String} The url used to post challenges.
+     */
+    getChallengesEndpoint() {
+      return 'challenges';
+    }
+
+    /**
      * Post issue to TC endpoint and format response
      * @param {Object} issue the github issue to post
      * @param callback the callback function
      */
     postIssue(issue, callback) {
         chrome.storage.local.get(TC_OAUTH_TOKEN_KEY, (result) => {
-            axios.post(getTCEndpoint() + 'challenges', issue, {
+            axios.post(getTCEndpoint() + this.getChallengesEndpoint(), issue, {
                 headers: {
                     'Authorization': 'Bearer ' + result[TC_OAUTH_TOKEN_KEY]
                 }
