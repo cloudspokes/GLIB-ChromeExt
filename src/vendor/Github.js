@@ -141,6 +141,12 @@ class GithubVendor extends BaseVendor {
   }
 
   /** @inheritdoc */
+  getChallengesEndpoint() {
+    return 'challenges/github';
+  }
+
+
+  /** @inheritdoc */
   getSelectedIssues(callback) {
     var issueIds = $('input[type="checkbox"][name="issues\\[\\]"]:checked')
       .map(function () {

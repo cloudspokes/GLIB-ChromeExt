@@ -130,6 +130,11 @@ class JiraVendor extends BaseVendor {
       window.location = `/browse/${this.issueId}?focusedCommentId=${data.id}&scroll-bottom=comment-${data.id}`;
     });
   }
+
+  /** @inheritdoc */
+  getChallengesEndpoint() {
+    return 'challenges/jira';
+  }
 }
 
 // Used for testing

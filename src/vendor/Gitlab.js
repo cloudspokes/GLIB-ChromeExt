@@ -117,6 +117,11 @@ class GitlabVendor extends BaseVendor {
       this._waitForElement(divId, callback);
     });
   }
+
+  /** @inheritdoc */
+  getChallengesEndpoint() {
+    return 'challenges/gitlab';
+  }
 }
 
 // Used for testing
