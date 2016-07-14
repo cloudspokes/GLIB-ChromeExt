@@ -13,7 +13,9 @@ var OAUTH_API_KEY = 'MyM7bhB25wdkNKI2OCa6137E1u8';
 
 var TC_ENDPOINT_DEV = 'https://glib-mock.herokuapp.com/';
 var TC_ENDPOINT_PROD = 'https://glib-prod.herokuapp.com/';
-var EXTENSION_ID = 'kbdpmophclfhglceikdgbcoambjjgkgb';
+var EXTENSION_ID = chrome.runtime.id;
+var DEVELOPMENT_ID = 'kbdpmophclfhglceikdgbcoambjjgkgb';
+var PROD_ID = 'fbdelahfocadoeclphgckagbmjpcnpkd';
 
 var OAUTH_APPS = {
     gitlab: {
@@ -41,10 +43,20 @@ var TC_OAUTH_REDIRECT_URI_KEY = 'glib::tc_oauth_redirect_uri';
 
 var DEFAULT_TC_OAUTH_REDIRECT_URI = `https://${EXTENSION_ID}.chromiumapp.org/oauth2`;
 
-var DEFAULT_TC_OAUTH_CLIENT_ID = '99831715-8dff-4473-a794-dfc8e9755ce1';
-var DEFAULT_TC_OAUTH_URL = 'https://accounts.topcoder-dev.com/oauth';
+var DEFAULT_TC_OAUTH_CLIENT_ID, PROD_TC_OAUTH_CLIENT_ID;
 
-var PROD_TC_OAUTH_CLIENT_ID = '99831715-8dff-4473-a794-dfc8e9755ce1';
+// THe client ids are tied to the callback url for the extension.
+if (EXTENSION_ID === DEVELOPMENT_ID) {
+  DEFAULT_TC_OAUTH_CLIENT_ID = '7b474a00-0606-4fb3-a3e9-1e1748edbd2d';
+  PROD_TC_OAUTH_CLIENT_ID = '7b474a00-0606-4fb3-a3e9-1e1748edbd2d';
+} else if ( EXTENSION_ID === PROD_ID) {
+  DEFAULT_TC_OAUTH_CLIENT_ID = '99831715-8dff-4473-a794-dfc8e9755ce1';
+  PROD_TC_OAUTH_CLIENT_ID = 'ef30d1d6-bc65-4281-ba66-91b85b060df1';
+} else {
+  console.error('Unknown extension id.  TC auth will fail.');
+}
+
+var DEFAULT_TC_OAUTH_URL = 'https://accounts.topcoder-dev.com/oauth';
 var PROD_TC_OAUTH_URL = 'https://accounts.topcoder.com/oauth';
 
 var ENVIRONMENT = 'glib::environment';
